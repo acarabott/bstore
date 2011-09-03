@@ -1,4 +1,6 @@
+s.options.memSize = 32768;
 s.boot;
+
 t = TempoClock(160/60);
 ~bassamp = 1;
 ~guitaramp = 1;
@@ -47,9 +49,9 @@ o.action_({|t, r, msg|
         ~trig = false;
     };
     
-})
+});
 
-~guitarBuffers = "/Users/arthurc/Documents/programming/computerMusic/bstore/audio/guitarD/*.aif".pathMatch.collect {|file| Buffer.read(s, file);}
+~guitarBuffers = "/Users/arthurc/Documents/programming/computerMusic/bstore/audio/guitarD/*.aif".pathMatch.collect {|file| Buffer.read(s, file)};
 
 ~kick = Buffer.read(s, "sounds/kick.aif");
 ~snare = Buffer.read(s, "sounds/snare.aif");
@@ -58,7 +60,8 @@ o.action_({|t, r, msg|
 Tdef(\bassline).play(t, quant:Quant(4));
 Tdef(\bassline).stop;
 
-
+~rowdyguitar = false;
+~rowdyguitar = true;
 (
     ~next = true;
     ~guitar = true;
@@ -90,7 +93,17 @@ Tdef(\bassline).stop;
         
         
         if(~trig && ~guitar) {
-            f.();
+            if(~rowdyguitar) {
+                ~double.(f, [4].choose, [2, 4].choose);
+            } {
+                if(0.2.coin) {
+                    ~double.(f, 2)
+                } {
+                    f.();
+                };
+                
+            };
+            
             ~guitar = false;
         } {
             if(0.666666.coin) {
@@ -144,6 +157,7 @@ f  = {|pan=0|
     if(~last > 0) {
         ~nextCol = ~nextCol.add(~last - 1);
     };
+    
     
     Synth(\BStorePiece3_Sampler, [\buf, ~last, \mix, 1, \room, 0.9, \damp, 0.01, \pan, ~pan, \amp, ~guitaramp]);
 };
@@ -203,7 +217,7 @@ Tdef(\drums, {
             Synth(\BStorePiece3_Sampler, [\buf, ~hats, \mix, mix, \room, room, \damp, damp, \pan, ~pan, \amp, ~drumsamp * amp]);
         } {
             if(index == 1 && 0.25.coin) {
-                ~double.({Synth(\BStorePiece3_Sampler, [\buf, ~hats, \mix, mix, \room, room, \damp, damp, \pan, ~pan, \amp, ~drumsamp * amp])},2)
+                ~double.({Synth(\BStorePiece3_Sampler, [\buf, ~hats, \mix, mix, \room, room, \damp, damp, \pan, ~pan, \amp, ~drumsamp * amp])}, 2, 2);
                 
             };
         };
@@ -212,11 +226,11 @@ Tdef(\drums, {
 });
 )
 
-~double = {|func, mult=2|
-    fork {
+~double = {|func, mult=2, div=2|
+    {
         mult.do { |i|
             func.();
-            (0.5 / mult).wait;
+            (0.5 / div).wait;
         };
-    }
+    }.fork(t)
 };
