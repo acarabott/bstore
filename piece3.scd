@@ -19,8 +19,8 @@ SynthDef(\BStorePiece3_Bass) { |out=0, freq=110, amp=1|
     
 }.add;
 
-SynthDef(\BStorePiece3_Sampler) { |out=0, buf=0, mix=0.5, room=0.8, damp=0.1, amp=0.5, pan=0|
-    var sig = PlayBuf.ar(1, buf, BufRateScale.kr(buf))*amp;
+SynthDef(\BStorePiece3_Sampler) { |out=0, buf=0, mix=0.5, room=0.8, damp=0.1, amp=0.5, pan=0, rate=1|
+    var sig = PlayBuf.ar(1, buf, BufRateScale.kr(buf)*rate)*amp;
     var verb = FreeVerb.ar(sig, mix, room, damp);
     DetectSilence.ar(verb, 0.001, 2, 2);
     Out.ar(out,
@@ -49,6 +49,8 @@ o.action_({|t, r, msg|
         ~trig = false;
     };
     
+    ~x = msg[3];
+    ~y = msg[4];
 });
 
 ~guitarBuffers = "/Users/arthurc/Documents/programming/computerMusic/bstore/audio/guitarD/*.aif".pathMatch.collect {|file| Buffer.read(s, file)};
@@ -62,7 +64,9 @@ Tdef(\bassline).stop;
 
 ~rowdyguitar = false;
 ~rowdyguitar = true;
+
 (
+    ~root = 50;
     ~next = true;
     ~guitar = true;
     Tdef(\bassline, {
@@ -76,15 +80,15 @@ Tdef(\bassline).stop;
             amp = 0.1;
         };
         
-        if(~trig && ~next) {
+        if(~trig.not && ~next) {
             // note = [57, 62, 53].choose;
-            note = [50, 45, 57].choose;
+            note = [~root, ~root-5, ~root+7].wchoose([0.5, 0.25, 0.25]);
             if(0.5.coin) {
                 ~next = false;
             };
             
         } {
-            note = 50;
+            note = ~root;
             ~next = true;
         };
 
@@ -117,8 +121,10 @@ Tdef(\bassline).stop;
 
 )
 
+(
 f  = {|pan=0|
     var size = ~guitarBuffers.size;
+    var rate = 1;
     if(~last.isNil) {
         ~last = size.rand;        
     } {
@@ -158,10 +164,14 @@ f  = {|pan=0|
         ~nextCol = ~nextCol.add(~last - 1);
     };
     
+    if(~rowdyguitar && 0.5.coin) {
+        rate = (~x.linlin(0, 1.0, 0, 3).ceil)
+        // rate = [0.5, 1.5, 2, 3].wchoose([4,1,4,4].normalizeSum);
+    };
     
-    Synth(\BStorePiece3_Sampler, [\buf, ~last, \mix, 1, \room, 0.9, \damp, 0.01, \pan, ~pan, \amp, ~guitaramp]);
+    Synth(\BStorePiece3_Sampler, [\buf, ~last, \mix, 1, \room, 0.9, \damp, 0.01, \pan, ~pan, \amp, ~guitaramp, \rate, rate]);
 };
-
+)
 w = Window("BStorePiece3 Mixer", Rect(100, 100, 400, 300)).front;
 w.view.addFlowLayout;
 EZSlider(w, 50@(w.bounds.height*0.9), "Bass", \unipolar, layout:\vert, action:{ |slider|
@@ -181,6 +191,7 @@ EZSlider(w, 50@(w.bounds.height*0.9), "drums", \unipolar, layout:\vert, action:{
 // Large pads every now and then
 // Changing from sets of drum patterns
 // Write possible structures for piece
+// Root note changes.
 
 Tdef(\drums).play(t, quant:Quant(4));
 Tdef(\drums).stop
