@@ -19,12 +19,12 @@ SynthDef(\BStorePiece3_Bass) { |out=0, freq=110, amp=1|
     
 }.add;
 
-SynthDef(\BStorePiece3_Sampler) { |out=0, buf=0, mix=0.5, room=0.8, damp=0.1, amp=0.5, pan=0, rate=1|
+SynthDef(\BStorePiece3_Sampler) { |out=0, buf=0, amp=0.5, pan=0, rate=1|
     var sig = PlayBuf.ar(1, buf, BufRateScale.kr(buf)*rate)*amp;
-    var verb = FreeVerb.ar(sig, mix, room, damp);
-    DetectSilence.ar(verb, 0.001, 2, 2);
+    DetectSilence.ar(sig, 0.01, 2, 2);
     Out.ar(out,
-        Pan2.ar(Mix.ar([sig, verb]), pan);
+        // Pan4
+        Pan2.ar(sig, pan);
     );
 }.add;
 
@@ -35,6 +35,21 @@ SynthDef(\BStorePiece3_Mouse) { |out=0, rate=10|
     
     SendReply.kr(imp, \xy, [x, y]);
 }.add;
+
+SynthDef(\BStorePiece3_Reverb) { |in=0, out=0, mix=1, room=0.9, damp=0.01|
+    var sig = In.ar(in, 2);
+    var verb = FreeVerb2.ar(sig[0], sig[1], mix, room, damp);
+    
+    Out.ar(out,
+        verb
+    );
+}.add;
+
+~verbBus = Bus.audio(s, 2);
+~reverb = Synth(\BStorePiece3_Reverb, [\in, ~verbBus]);
+
+Synth.before(~reverb, \BStorePiece3_Sampler, [\out, ~verbBus, \buf, ~guitarBuffers.choose, \pan, ~pan, \amp, ~guitaramp, \rate, 1]);
+
 
 
 x = Synth(\BStorePiece3_Mouse);
