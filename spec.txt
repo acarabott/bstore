@@ -1,12 +1,46 @@
-Complete audio spec, inc hardware - tables etc.
+# B-Store 
 
+3 hours - 3 pieces, each played twice
+
+## Piece 1
+	* Slower atmospheric vibe
+	* Leytonstone feel
+	* Bouncing bed of chords
+	* Reverby melodic line
+
+### Interaction
+	* Upper half controlling high frequency / melodic activity
+	* Each quarter controlling speaker pan
+	
+## Piece 2
+	* Drum based piece, clipper samples
+	* Upper half controlling reverb / delay swirl effect
+	* Thick bass line
+	* ABA structure
+		* A - Many drums
+		* B - Subdued
+		* A - Many drums
+	* High synthy hits with long reverb tail / comb filter
+### Interaction
+	* Overall activity controlling drum activity
+	* Lower half controlling bass timbre
+	* Left and right halves controlling drum LR pan
+	* Triggering high synth hits when activity crosses threshold for a quarter, quarter determines pitch set
+
+## Piece 3
+	* Sample based?
+	* Guitar based?
+	* Microphone?
+	
 4 Channels of audio
 
 Melodic slant
 
 Not go and leave, have involvement.
 
-Recording
+Going to record it
 
 3 hours
+
+
 

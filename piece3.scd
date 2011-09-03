@@ -184,14 +184,6 @@ EZSlider(w, 50@(w.bounds.height*0.9), "drums", \unipolar, layout:\vert, action:{
     ~drumsamp = slider.value;
 });
 
-// Capture melodic patterns
-// Guitar activity control
-// Guitar effects
-// Larger scale decisions - play / don't play for x time
-// Large pads every now and then
-// Changing from sets of drum patterns
-// Write possible structures for piece
-// Root note changes.
 
 Tdef(\drums).play(t, quant:Quant(4));
 Tdef(\drums).stop
@@ -245,3 +237,14 @@ Tdef(\drums, {
         };
     }.fork(t)
 };
+
+// Capture melodic patterns
+// Guitar activity control
+// Guitar effects
+// Larger scale decisions - play / don't play for x time
+// Large pads every now and then
+// Changing from sets of drum patterns
+// Write possible structures for piece
+// Root note changes.
+
+// Structure
