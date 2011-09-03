@@ -31,16 +31,20 @@
 	* Sample based?
 	* Guitar based?
 	* Microphone?
+
+### Structure
+	* Intro
+		* Bass line
+		* Drums
+	* Section A - 10 mins
+		* Guitar
+		* Swoops
+	* Section B	- 10 mins
+		* Bass drops out
+		* Drums come down
+		* Pads
+		* Guitar
+	* Section A - 10 mins
+		* Bass and drums back in
+		
 	
-4 Channels of audio
-
-Melodic slant
-
-Not go and leave, have involvement.
-
-Going to record it
-
-3 hours
-
-
-
