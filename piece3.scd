@@ -469,34 +469,81 @@ t = TempoClock(160/60);
 
 
 
-~lastGuitar.nearestInList([0, 2, 4, 7]);
-x = [1,2,3,4];
-x.shallowCopy.remove(1)
-
 f.();
 (
     ~lastGuitar = nil;
+    ~lastStarter = nil;
     ~count = 4;
-    ~resolvers = [0, 2, 4, 7];
-    f = {
-        var buffer, weights, nearest, sResolvers;
-        if(~count == 1) {
-            weights = 0!8;
-            nearest = ~lastGuitar.nearestInList(~resolvers);
-            weights[nearest] = 1;
-            sResolvers = ~resolvers.shallowCopy;
-            sResolvers.remove(nearest);
-            weights[~lastGuitar.nearestInList(sResolvers)] = 1;
-            weights.postln;
-            // weights = [1,0,1,0,1,0,0,1];
-            ~count = 4;
-        } {
-            weights = [2,1,2,1,2,1,2,2];
-            ~count = ~count - 1;
+    ~phrases = 4;
+    ~resolvers = [0, 1, 2, 4, 5, 7];
+    ~phraseResolvers = [0, 7];
+    ~getNeighbours = {|index, max, step=1|
+        var ret = List[];
+        if(index - step >= 0) {
+            ret.add(index-step);
+        };
+        if((index + step) <= max) {
+            ret.add(index+step);
         };
         
+        ret;
+    };
+    ~setNeighbours = {|collection, neighbours, value|
+        neighbours.do { |item, i|
+            collection[item] = value;
+        };
+        
+        collection;
+    };
+    f = {
+        var buffer, weights, nearest, sResolvers, neighbours;
+        
+        switch (~count)
+            {1}  {
+                "resolved!".postln;
+                weights = 0!8;
+                if(~phrases == 1) {
+                    nearest = ~lastGuitar.nearestInList(~phraseResolvers);
+                    "phrases resolved!".postln;
+                    ~phrases = 5;
+                } {
+                    nearest = ~lastGuitar.nearestInList(~resolvers);                    
+                    sResolvers = ~resolvers.shallowCopy;
+                    sResolvers.remove(nearest);
+                    weights[~lastGuitar.nearestInList(sResolvers)] = 1;
+                };
+                weights[nearest] = 1;
+                ~count = 5;    // 5 as 1 will be subtracted            
+                ~phrases = ~phrases - 1;
+            }
+            {4}  {
+                "start".postln;
+                if(~lastStarter.notNil && 0.5.coin) {
+                    weights = ~setNeighbours.(0!8, ~getNeighbours.(~lastStarter, ~guitarBuffers.size-1), 1);
+                    
+                } {
+                    weights = [2,1,2,1,2,1,2,2];
+                    
+                };
+            }
+            {~count}    {
+                if(0.75.coin) {
+                    "step".postln;
+                    weights = ~setNeighbours.(0!8, ~getNeighbours.(~lastGuitar, ~guitarBuffers.size-1), 1);
+                } {
+                    "thirds".postln;
+                    weights = ~setNeighbours.(0!8, ~getNeighbours.(~lastGuitar, ~guitarBuffers.size-1, 2), 1);                    
+                };
+            };
+        
+        weights.postln;
+        ~count = ~count - 1;
+        
         buffer = ~guitarBuffers.wchoose(weights.normalizeSum);
-        Synth.before(~guitarVerb, \BStorePiece3_Sampler, [\out, ~guitarVerbBus, \buf, buffer, \pan, 0, \amp, ~guitaramp, \rate, 1]);
         ~lastGuitar = ~guitarBuffers.indexOf(buffer);
+        if(~count == 4) {
+            ~lastStarter = ~lastGuitar;
+        };
+        Synth.before(~guitarVerb, \BStorePiece3_Sampler, [\out, ~guitarVerbBus, \buf, buffer, \pan, 0, \amp, ~guitaramp, \rate, 1]);
     };
 )
