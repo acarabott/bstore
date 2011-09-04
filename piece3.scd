@@ -331,9 +331,14 @@ t = TempoClock(160/60);
 ~hatsPats.add(\quavers -> [1, 0]);
 ~hatspat = ~hatsPats[\offbeat];
 ~hatspat = ~hatsPats[\main];
+
+// Will need to have 4 channel busses and two reverbs per bus
 ~drumVerbBus = Bus.audio(s, 2);
 ~drumRoomInit = 0.2;
 ~drumVerb = Synth(\BStorePiece3_Reverb, [\in, ~drumVerbBus, \damp, 0.4, \mix, 0.8, \room, ~drumRoomInit]);
+~guitarVerbBus = Bus.audio(s, 2);
+~guitarRoomInit = 0.8;
+~guitarVerb = Synth(\BStorePiece3_Reverb, [\in, ~guitarVerbBus, \damp, 0.4, \mix, 0.8, \room, ~guitarRoomInit]);
 
 ~control = Routine {
     "Bass start".postln;
@@ -463,4 +468,35 @@ t = TempoClock(160/60);
 ~control.play
 
 
-Synth(\beep, [\freq, 440, \amp, 0.2, \pan, 0, \out, 0]);
+
+~lastGuitar.nearestInList([0, 2, 4, 7]);
+x = [1,2,3,4];
+x.shallowCopy.remove(1)
+
+f.();
+(
+    ~lastGuitar = nil;
+    ~count = 4;
+    ~resolvers = [0, 2, 4, 7];
+    f = {
+        var buffer, weights, nearest, sResolvers;
+        if(~count == 1) {
+            weights = 0!8;
+            nearest = ~lastGuitar.nearestInList(~resolvers);
+            weights[nearest] = 1;
+            sResolvers = ~resolvers.shallowCopy;
+            sResolvers.remove(nearest);
+            weights[~lastGuitar.nearestInList(sResolvers)] = 1;
+            weights.postln;
+            // weights = [1,0,1,0,1,0,0,1];
+            ~count = 4;
+        } {
+            weights = [2,1,2,1,2,1,2,2];
+            ~count = ~count - 1;
+        };
+        
+        buffer = ~guitarBuffers.wchoose(weights.normalizeSum);
+        Synth.before(~guitarVerb, \BStorePiece3_Sampler, [\out, ~guitarVerbBus, \buf, buffer, \pan, 0, \amp, ~guitaramp, \rate, 1]);
+        ~lastGuitar = ~guitarBuffers.indexOf(buffer);
+    };
+)
