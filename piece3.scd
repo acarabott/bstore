@@ -56,6 +56,8 @@
     ~p3_guitarActivityLevel = 1;
     ~p3_bassNote = ~p3_root - 4;
     ~p3_thickGuitarHarmony = true;
+    // TODO fade ~p3_guitaramp down to 0
+    // TODO fade ~p3_varsawamp up to 0.8
     (3 * 60).wait;    
     ~p3_drumBuild.reset;
     ~p3_drumRoutine.reset;
@@ -70,7 +72,8 @@
     // Guitar crazy
     // Drums On beat
 };
-
+)
+(
 ~p3_drumBuild = Routine {
     //  Start routine
     ~p3_hatsOn = true;
@@ -202,8 +205,13 @@
         0.5.wait;
     };
 };
-~p3_guitarMelody.play(~p3_clock, Quant(4));
-~p3_guitarMelody.stop
+
+// ~p3_guitarMelody.play(~p3_clock, Quant(4));
+// ~p3_guitarMelody.stop
+// ~p3_varsawamp = 0.5;
+// ~p3_thickGuitarHarmony = true;
+// ~p3_guitaramp = 1;
+// ~p3_bassamp = 1
 ~p3_guitarMelody = Routine {
     inf.do {|i|
         var melody;
@@ -214,23 +222,28 @@
             melody = ~p3_guitarMelodies.choose;
             melody.do { |melody, j|
                 var wait = 0;
+                var synths = List[];
+                
                 if(melody[0].notNil) {
                     // TODO Make these pan positions 4 way!
                     Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[melody[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_guitaramp, \rate, 1]);
                     Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[melody[0]], \pan, ~p3_x.linlin(0, 1, 1, -1), \amp, ~p3_guitaramp, \rate, 0.5]);
                 
                     if(~p3_guitarMelodyCount >= 3) {
-                        Synth(\BSP3_VarSaw, [\amp, ~p3_varsawamp, \freq, (~p3_root  + Scale.minor.degrees.wrapAt(melody[0])).midicps, \out, ~p3_varsawVerbBus, \pan, ~p3_x.linlin(0, 1, -1, 1)]);
+                        synths.add([~p3_root  + Scale.minor.degrees.wrapAt(melody[0]), ~p3_x.linlin(0, 1, -1, 1)]);
                     };
                     if(~p3_guitarMelodyCount >= 7) {
-                        Synth(\BSP3_VarSaw, [\amp, ~p3_varsawamp, \freq, (~p3_root  + 12 + Scale.minor.degrees.wrapAt(melody[0])).midicps, \out, ~p3_varsawVerbBus, \pan, ~p3_x.linlin(0, 1, -1, 1)]);
+                        synths.add([~p3_root  + 12 + Scale.minor.degrees.wrapAt(melody[0]), ~p3_x.linlin(0, 1, 1, -1)]);
                     };
                     if(~p3_thickGuitarHarmony) {
-                        Synth(\BSP3_VarSaw, [\amp, ~p3_varsawamp, \freq, (~p3_root + Scale.minor.degrees.wrapAt(melody[0]-2)).midicps, \out, ~p3_varsawVerbBus, \pan, ~p3_x.linlin(0, 1, -1, 1)]);
-                        Synth(\BSP3_VarSaw, [\amp, ~p3_varsawamp, \freq, (~p3_root + 24 + Scale.minor.degrees.wrapAt(melody[0]+2)).midicps, \out, ~p3_varsawVerbBus, \pan, ~p3_x.linlin(0, 1, -1, 1)]);
-                        Synth(\BSP3_VarSaw, [\amp, ~p3_varsawamp, \freq, (~p3_root + 12 + Scale.minor.degrees.wrapAt(melody[0]-2)).midicps, \out, ~p3_varsawVerbBus, \pan, ~p3_x.linlin(0, 1, -1, 1)]);
-                    } ;
-                
+                        synths.add([~p3_root + Scale.minor.degrees.wrapAt(melody[0]-2), ~p3_x.linlin(0, 1, -1, 1)]);
+                        synths.add([~p3_root + 12 + Scale.minor.degrees.wrapAt(melody[0]-2), ~p3_x.linlin(0, 1, 1, -1)]);
+                        synths.add([~p3_root + 24 + Scale.minor.degrees.wrapAt(melody[0]+2), ~p3_x.linlin(0, 1, -1, 1)]);
+                    };
+                    
+                    synths.do { |synth|
+                        Synth(\BSP3_VarSaw, [\amp, ~p3_varsawamp/synths.size, \freq, synth[0].midicps, \out, ~p3_varsawVerbBus, \pan, synth[1]]);
+                    };
                     wait = wait + (melody[1]/8);
 
                     (melody[1]/8).wait;
@@ -265,7 +278,7 @@
     ~p3_bassamp = 1;
     ~p3_guitaramp = 1;
     ~p3_drumsamp = 1;
-    ~p3_varsawamp = 1;
+    ~p3_varsawamp = 0.4;
     
     ~p3_root = 50;
     ~p3_bassNote = ~p3_root;
@@ -281,7 +294,7 @@
     ~p3_snarePats.add(\main ->      [0, 0, 0, 1,      0, 0, 0, 0,     0, 0, 0, 0,     1, 10, 10, 10]);
     ~p3_snarePats.add(\active ->    [0, 0, 0, 1,      0, 0, 1, 2,     1, 0, 2, 0,     1, 5, 5, 5]);
     ~p3_hatsPats.add(\offbeat ->    [0, 0, 1, 0]);
-    ~p3_hatsPats.add(\main ->       [0, 2, 1, 0,      0, 1, 0, 0,     0, 1, 0, 2,     0, 0, 1, 0]);
+    ~p3_hatsPats.add(\main ->       [0, 10, 1, 0,      0, 1, 0, 0,     0, 1, 0, 10,     0, 0, 1, 0]);
     ~p3_hatsPats.add(\quavers ->    [1, 5]);
     
     ~p3_snarePat    = ~p3_snarePats[\main];
@@ -327,8 +340,7 @@
     }.add;
 
     SynthDef(\BSP3_Sampler) { |out=0, buf=0, amp=0.5, pan=0, rate=1|
-        var sig = PlayBuf.ar(1, buf, BufRateScale.kr(buf)*rate)*amp;
-        DetectSilence.ar(sig, 0.01, 2, 2);
+        var sig = PlayBuf.ar(1, buf, BufRateScale.kr(buf)*rate, doneAction: 2)*amp;
         Out.ar(out,
             // TODO Pan4
             Pan2.ar(sig, pan);
@@ -356,7 +368,7 @@
         var sig = Mix.new(VarSaw.ar(freq * [0.5,1,2], 0, LFNoise1.kr(0.3,0.1,0.1), 0.1));
         var line = Line.kr(20000, 1000, 1.5);
         var lpf = LPF.ar(sig, line);
-        var env = EnvGen.ar(Env.linen(0.5, 0.75, 1, 0.25*amp, 'sine'), doneAction: 2);
+        var env = EnvGen.ar(Env.linen(0.2, 0.75, 1, amp, 'sine'), doneAction: 2);
 
         Out.ar(out,
             // TODO Pan4
@@ -387,7 +399,8 @@
     
     "Responders loaded".postln;
 };
-
+)
+(
 ~p3_functions = {
     ~p3_drumReset = {
         //  Initialise
@@ -541,3 +554,14 @@
         0.5.wait;
     };
 };
+
+~p3_guitarMelodies.add(\four -> [[7, 1.5], [4, 1.5], [5, 1.5], [2, 1.5], [nil, 4], [4, 1.5], [2, 1.5], [3, 1.5], [0, 1.5], [nil, 8]])
+~p3_guitarMelodies.add(\five -> [[7, 4], [4, 4], [5, 4], [2, 4], [nil, 8], [4, 4], [2, 4], [4, 4], [0, 4], [nil, 16]])
+~p3_guitarMelodies.add(\six -> [[0, 4], [1, 4], [2, 8],    [2, 4], [3, 4], [4, 8]])
+
+~p3_guitaramp = 1
+~p3_varsawamp = 1
+~p3_thickGuitarHarmony = false
+~p3_guitarMelodies = Dictionary.new;
+
+~p3_guitarMelodies.add(\four -> [[4, 4], [3, 6], [0, 2], [1, 8]])
