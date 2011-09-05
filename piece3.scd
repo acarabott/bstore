@@ -11,8 +11,9 @@
 ~p3_stop = {
     ~p3_mouseResponder.remove;
     ~control.stop;
-    ~drums.stop;
-    ~guitar.stop;
+    ~p3_drumRoutine.stop;
+    ~p3_drumBuild.stop;
+    ~p3_interactiveGuitar.stop;
     ~p3_bassline_1.stop;
     ~p3_guitarStart.stop;
     ~p3_guitarMelody.stop;
@@ -30,31 +31,47 @@
     // 10.wait;
     1.wait;
     "Drums start".postln;
-    ~drums.play(~p3_clock, Quant(4));
-    ~drumBuild.play;
+    ~p3_drumRoutine.play(~p3_clock, Quant(4));
+    ~p3_drumBuild.play;
     
-    //  Guitar pre made
+    "Guitar starts".postln;
+    ~p3_guitarStart.play(~p3_clock, Quant(4));
+    // TODO have this accumlate activity, once it hits threshold move onto next section
+    // (4 * 60).wait;
+    10.wait;
+    // When an activity level reaches 0.75 or so do
+    ~p3_hatsPat = ~p3_hatsPats[\quavers];
+    // (2 * 60).wait;
+    10.wait;
+    ~p3_guitarStart.stop;
     
+    // Guitar melodies start
+    ~p3_guitarMelody.play(~p3_clock, Quant(4));
+    // as this acumulates and hits 0.75 then do 
+    ~p3_guitarActivityLevel = 0.75;
+    ~p3_snarePat = ~p3_snarePats[\active];
+    (3 * 60).wait;
+    // Drums stop, guitar harmony thickens, bass changes to Lydian root
+    ~p3_drumRoutine.stop;
+    ~p3_guitarActivityLevel = 1;
+    ~p3_bassNote = ~p3_root - 4;
+    ~p3_thickGuitarHarmony = true;
+    (3 * 60).wait;    
+    ~p3_drumBuild.reset;
+    ~p3_drumRoutine.reset;
+    10.wait;
+    ~p3_drumReset.();
+    ~p3_drumRoutine.play(~p3_clock, Quant(4));
+    ~p3_drumBuild.play;
+    
+    ~p3_guitarMelody.stop;
+    ~p3_bassNote = ~p3_root;
     // Guitar interactive
-    
     // Guitar crazy
     // Drums On beat
-    //
 };
 
-~drumBuild = Routine {
-    //  Initialise
-    ~p3_hatsOn     = false;
-    ~p3_kickOn     = false;
-    ~p3_snareOn    = false;
-    ~p3_hatsPat    = ~p3_hatsPats[\offbeat];
-    ~p3_drumVerbRoutine.stop;
-    0.5.wait;
-    ~p3_drumVerbRoutine.reset;
-    ~p3_drumVerbRoutine.play;
-    ~p3_drumVerb.set(\room, ~p3_drumRoomInit);
-    
-    5.wait;
+~p3_drumBuild = Routine {
     //  Start routine
     ~p3_hatsOn = true;
     // 20.wait;
@@ -90,10 +107,10 @@
             amp = 0.1;
         };
         
-        note = ~p3_root;
+        note = ~p3_bassNote;
         if(~p3_bassMove) {
             if(~p3_y <= 0.5 && next) {
-                note = [~p3_root-5, ~p3_root+7].wchoose([0.25, 0.25]);
+                note = [~p3_bassNote-5, ~p3_bassNote+7].wchoose([0.25, 0.25]);
                 if(0.9.coin) {
                     next = false;
                 };
@@ -112,7 +129,7 @@
     }
 };
 
-~drums = Routine {
+~p3_drumRoutine = Routine {
     inf.do {|i|
         var index = i%16;
         var mult = 1;
@@ -173,33 +190,67 @@
     };
 };
 
-
-~guitar = Routine {
-    var rand;
-    inf.do { |i|        
-        if(~p3_x >=0.5) {
-            if(~rowdyguitar) {
-                rand = [1, 2].choose;
-                ~p3_double.(f, rand*4, rand);
-            } {
-                if(0.2.coin) {
-                    ~p3_double.(f, 2)
-                } {
-                    f.();
-                };
-            
-            };
-        
-            ~guitar = false;
+~p3_guitarStart = Routine {
+    inf.do {|i|
+        if(~p3_guitarResolved.not && (~p3_guitarStartProb).coin) {
+            ~p3_guitarNote.();
         } {
-            if(~p3_guitarRetrig.coin) {
-                ~guitar = true;
+            if(0.5.coin) {
+                ~p3_guitarResolved = false;
             };
         };
-    
         0.5.wait;
     };
 };
+~p3_guitarMelody.play(~p3_clock, Quant(4));
+~p3_guitarMelody.stop
+~p3_guitarMelody = Routine {
+    inf.do {|i|
+        var melody;
+        i.postln;
+        // TODO Make this cumulative activity level
+        if(~p3_guitarActivityLevel.coin) {
+            "play!".postln;
+            melody = ~p3_guitarMelodies.choose;
+            melody.do { |melody, j|
+                var wait = 0;
+                if(melody[0].notNil) {
+                    // TODO Make these pan positions 4 way!
+                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[melody[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_guitaramp, \rate, 1]);
+                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[melody[0]], \pan, ~p3_x.linlin(0, 1, 1, -1), \amp, ~p3_guitaramp, \rate, 0.5]);
+                
+                    if(~p3_guitarMelodyCount >= 3) {
+                        Synth(\BSP3_VarSaw, [\amp, ~p3_varsawamp, \freq, (~p3_root  + Scale.minor.degrees.wrapAt(melody[0])).midicps, \out, ~p3_varsawVerbBus, \pan, ~p3_x.linlin(0, 1, -1, 1)]);
+                    };
+                    if(~p3_guitarMelodyCount >= 7) {
+                        Synth(\BSP3_VarSaw, [\amp, ~p3_varsawamp, \freq, (~p3_root  + 12 + Scale.minor.degrees.wrapAt(melody[0])).midicps, \out, ~p3_varsawVerbBus, \pan, ~p3_x.linlin(0, 1, -1, 1)]);
+                    };
+                    if(~p3_thickGuitarHarmony) {
+                        Synth(\BSP3_VarSaw, [\amp, ~p3_varsawamp, \freq, (~p3_root + Scale.minor.degrees.wrapAt(melody[0]-2)).midicps, \out, ~p3_varsawVerbBus, \pan, ~p3_x.linlin(0, 1, -1, 1)]);
+                        Synth(\BSP3_VarSaw, [\amp, ~p3_varsawamp, \freq, (~p3_root + 24 + Scale.minor.degrees.wrapAt(melody[0]+2)).midicps, \out, ~p3_varsawVerbBus, \pan, ~p3_x.linlin(0, 1, -1, 1)]);
+                        Synth(\BSP3_VarSaw, [\amp, ~p3_varsawamp, \freq, (~p3_root + 12 + Scale.minor.degrees.wrapAt(melody[0]-2)).midicps, \out, ~p3_varsawVerbBus, \pan, ~p3_x.linlin(0, 1, -1, 1)]);
+                    } ;
+                
+                    wait = wait + (melody[1]/8);
+
+                    (melody[1]/8).wait;
+                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[melody[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_guitaramp/2, \rate, 2]);
+                    wait = wait + (melody[1]/8);
+                    (melody[1]/8).wait;
+                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[melody[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_guitaramp/2, \rate, 4]);
+            
+                };
+                (melody[1] - wait).wait;
+            };
+            ~p3_guitarMelodyCount = ~p3_guitarMelodyCount + 1;
+        } {
+            "no play".postln;
+            8.wait;
+        };
+        
+    }
+};
+
 )
 
 (
@@ -214,8 +265,10 @@
     ~p3_bassamp = 1;
     ~p3_guitaramp = 1;
     ~p3_drumsamp = 1;
-
+    ~p3_varsawamp = 1;
+    
     ~p3_root = 50;
+    ~p3_bassNote = ~p3_root;
     
     ~p3_bassMove = false;
     
@@ -231,7 +284,7 @@
     ~p3_hatsPats.add(\main ->       [0, 2, 1, 0,      0, 1, 0, 0,     0, 1, 0, 2,     0, 0, 1, 0]);
     ~p3_hatsPats.add(\quavers ->    [1, 5]);
     
-    ~p3_snarePat    = ~p3_snarePats[\main]
+    ~p3_snarePat    = ~p3_snarePats[\main];
     ~p3_hatsPat     = ~p3_hatsPats[\main];
     
     ~p3_drumRoomInit = 0.2;
@@ -248,6 +301,13 @@
     ~p3_guitarResolvers = [0, 1, 2, 4, 5, 7];
     ~p3_phraseResolvers = [0, 7];
     
+    ~p3_guitarMelodies = Dictionary.new;
+    ~p3_guitarMelodies.add(\one ->      [[4, 4], [3, 4], [5, 4], [1, 4],    [4, 4], [3, 4], [1, 1.5],           [0, 1.5], [2, 1.5], [nil, 3.5]] );
+    ~p3_guitarMelodies.add(\two ->      [[5, 4], [6, 4], [7, 4], [4, 4],    [5, 4], [6, 4], [4, 8]]);
+    ~p3_guitarMelodies.add(\three ->    [[2, 2], [1, 2], [2, 1], [3, 2],    [2, 2], [1, 2], [2, 1], [0, 2],     [2, 2], [1, 2], [2, 1], [3, 2], [4, 4], [nil, 7]]);
+    
+    ~p3_thickGuitarHarmony = false;
+    ~p3_guitarStartProb = 1/16;
     ~p3_guitarActivityLevel = 0;
     ~p3_guitarMelodyCount = 0;
     "Variables initialised".postln;
@@ -292,14 +352,16 @@
         );
     }.add;    
     
-    SynthDef(\BSP3_VarSaw) { |out=0, freq=440, amp=0.25|
+    SynthDef(\BSP3_VarSaw) { |out=0, freq=440, amp=0.25, pan=0|
         var sig = Mix.new(VarSaw.ar(freq * [0.5,1,2], 0, LFNoise1.kr(0.3,0.1,0.1), 0.1));
         var line = Line.kr(20000, 1000, 1.5);
         var lpf = LPF.ar(sig, line);
-        var env = EnvGen.ar(Env.linen(0.5, 0.75, 1, amp, 'sine'), doneAction: 2);
+        var env = EnvGen.ar(Env.linen(0.5, 0.75, 1, 0.25*amp, 'sine'), doneAction: 2);
 
         Out.ar(out,
-            lpf.dup * env
+            // TODO Pan4
+            Pan2.ar(lpf * env, 0);
+            
         );
     }.add;
     
@@ -320,12 +382,30 @@
     ~p3_mouseResponder.action_({|t, r, msg|
         ~p3_x = msg[3];
         ~p3_y = msg[4];
+        // Move updating routines to here...
     });
     
     "Responders loaded".postln;
 };
 
 ~p3_functions = {
+    ~p3_drumReset = {
+        //  Initialise
+        ~p3_hatsOn     = false;
+        ~p3_kickOn     = false;
+        ~p3_snareOn    = false;
+        ~p3_hatsPat    = ~p3_hatsPats[\offbeat];
+        ~p3_snarePat    = ~p3_snarePats[\main];
+        
+        // ~p3_drumVerbRoutine.stop;
+        // 0.5.wait;
+        // ~p3_drumVerbRoutine.reset;
+        // ~p3_drumVerbRoutine.play;
+        ~p3_drumVerb.set(\room, ~p3_drumRoomInit);    
+        
+        "Drums reset".postln;
+    };
+    
     ~p3_double = {|func, mult=2, div=2|
         {
             mult.do { |i|
@@ -428,87 +508,6 @@
 };
 )
 
-// TODO have this accumlate activity, once it hits threshold move onto next section
-~p3_guitarStartProb = 1/1;
-
-~p3_guitarStart = Routine {
-    inf.do {|i|
-        if(~p3_guitarResolved.not && (~p3_guitarStartProb).coin) {
-            ~p3_guitarNote.();
-        } {
-            if(0.5.coin) {
-                ~p3_guitarResolved = false;
-            };
-        };
-        0.5.wait;
-    };
-};
-
-~p3_guitarStart.play(~p3_clock, Quant(4))
-~p3_guitarStart.stop;
-
-~p3_guitarMelodies = Dictionary.new;
-
-~p3_guitarMelodies.add(\one -> [[4, 4], [3, 4], [5, 4], [1, 4],    [4, 4], [3, 4], [1, 1.5], [0, 1.5], [2, 1.5], [nil, 3.5]] );
-~p3_guitarMelodies.add(\two -> [[5, 4], [6, 4], [7, 4], [4, 4],    [5, 4], [6, 4], [4, 8]]);
-~p3_guitarMelodies.add(\three -> [[2, 2], [1, 2], [2, 1], [3, 2],    [2, 2], [1, 2], [2, 1], [0, 2],     [2, 2], [1, 2], [2, 1], [3, 2], [4, 4], [nil, 7]]);
-
-~p3_guitarMelody.play(~p3_clock, Quant(4));
-~p3_guitarMelody.stop
-
-~p3_guitarActivityLevel = 0.8;
-// When this reaches 0.75 or so do
-~p3_hatsPat = ~p3_hatsPats[\quavers];
-~p3_snarePat = ~p3_snarePats[\active];
-
-~p3_guitarMelodyCount = 0;
-~p3_guitarMelody = Routine {
-    inf.do {|i|
-        var melody;
-        i.postln;
-        // TODO Make this cumulative activity level
-        if(~p3_guitarActivityLevel.coin) {
-            "play!".postln;
-            melody = ~p3_guitarMelodies.choose;
-            melody.do { |melody, j|
-                var wait = 0;
-                if(melody[0].notNil) {
-                    // TODO Make these pan positions 4 way!
-                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[melody[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_guitaramp, \rate, 1]);
-                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[melody[0]], \pan, ~p3_x.linlin(0, 1, 1, -1), \amp, ~p3_guitaramp, \rate, 0.5]);
-                
-                    if(~p3_guitarMelodyCount >= 3) {
-                        Synth(\BSP3_VarSaw, [\freq, (~p3_root  + Scale.minor.degrees.wrapAt(melody[0])).midicps, \out, ~p3_varsawVerbBus]);
-                    };
-                    if(~p3_guitarMelodyCount >= 7) {
-                        Synth(\BSP3_VarSaw, [\freq, (~p3_root  + 12 + Scale.minor.degrees.wrapAt(melody[0])).midicps, \out, ~p3_varsawVerbBus]);
-                    };
-                    if(~p3_guitarMelodyCount >= 11) {
-                        Synth(\BSP3_VarSaw, [\freq, (~p3_root  + Scale.minor.degrees.wrapAt(melody[0]+2)).midicps, \out, ~p3_varsawVerbBus]);
-                    };
-                    if(~p3_guitarMelodyCount >= 15) {
-                        Synth(\BSP3_VarSaw, [\freq, (~p3_root  + 12 + Scale.minor.degrees.wrapAt(melody[0]-2)).midicps, \out, ~p3_varsawVerbBus]);
-                    };
-                
-                    wait = wait + (melody[1]/8);
-
-                    (melody[1]/8).wait;
-                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[melody[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_guitaramp/2, \rate, 2]);
-                    wait = wait + (melody[1]/8);
-                    (melody[1]/8).wait;
-                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[melody[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_guitaramp/2, \rate, 4]);
-            
-                };
-                (melody[1] - wait).wait;
-            };
-            ~p3_guitarMelodyCount = ~p3_guitarMelodyCount + 1;
-        } {
-            "no play".postln;
-            8.wait;
-        };
-        
-    }
-};
 
  
 // TODO Capture melodic patterns
@@ -520,3 +519,25 @@
 // TODO Write possible structures for piece
 // TODO Root note changes.
 // TODO Guitar phrases of different no.
+
+~p3_interactiveGuitar = Routine {
+    var rand;
+    inf.do { |i|        
+        if(~p3_x >=0.5) {
+            if(~rowdyguitar) {
+                rand = [1, 2].choose;
+                ~p3_double.(f, rand*4, rand);
+            } {
+                if(0.2.coin) {
+                    ~p3_double.(f, 2)
+                } {
+                    f.();
+                };
+            
+            };
+        } {
+        };
+    
+        0.5.wait;
+    };
+};
