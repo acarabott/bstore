@@ -7,18 +7,26 @@
 ~p3_buffers.();
 ~p3_synths.();
 
-
+~p3_stop.();
+~p3_stop = {
+    ~p3_mouseResponder.remove;
+    ~control.stop;
+    ~drums.stop;
+    ~guitar.stop;
+    ~p3_bassline_1.stop;
+};
 ~control.play
+~control.stop;
 (
 ~control = Routine {
     "Bass start".postln;
-    ~bassline.play(~p3_clock, Quant(4));
-    10.wait;
-    // 1.wait;
+    ~p3_bassline_1.play(~p3_clock, Quant(4));
+    // 10.wait;
+    1.wait;
     "Bass Moving".postln;
     ~p3_bassMove = true;
-    10.wait;
-    // 1.wait;
+    // 10.wait;
+    1.wait;
     "Drums start".postln;
     ~drums.play(~p3_clock, Quant(4));
     ~drumBuild.play;
@@ -37,7 +45,7 @@
     ~p3_hatsOn     = false;
     ~p3_kickOn     = false;
     ~p3_snareOn    = false;
-    ~p3_hatsBufferpat    = ~p3_hatsPats[\offbeat];
+    ~p3_hatsPat    = ~p3_hatsPats[\offbeat];
     ~p3_drumVerbRoutine.stop;
     0.5.wait;
     ~p3_drumVerbRoutine.reset;
@@ -47,19 +55,22 @@
     5.wait;
     //  Start routine
     ~p3_hatsOn = true;
-    20.wait;
+    // 20.wait;
+    2.wait;
     "Kick start".postln;
     ~p3_kickOn = true;
-    10.wait;
+    // 10.wait;
+    2.wait;
     "Snare start, hats change.".postln;
-    ~p3_hatsBufferpat = ~p3_hatsPats[\main];
+    ~p3_hatsPat = ~p3_hatsPats[\main];
     ~p3_snareOn = true;
-    20.wait;
+    // 20.wait;
+    2.wait;
     "Drum reverb interactive".postln;
     ~p3_drumVerbRoutine.play;
 };
 
-~bassline = Routine {
+~p3_bassline_1 = Routine {
     var next = true;
     
     inf.do{ |i|
@@ -99,28 +110,30 @@
     inf.do {|i|
         var index = i%16;
         var mult = 1;
+        var kickWrap, snareWrap, hatsWrap;
+        kickWrap = ~p3_kickPat.wrapAt(i);
+        snareWrap = ~p3_snarePat.wrapAt(i);
+        hatsWrap = ~p3_hatsPat.wrapAt(i);
         if(~p3_kickOn) {
-            if(~p3_kickpat.wrapAt(i) == 1) {
+            if(kickWrap == 1) {
                 Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_kickBuffer, \pan, 0, \amp, ~p3_drumsamp, \out, ~p3_drumVerbBus]);
             };
         };
         if(~p3_snareOn) {
-            if(~p3_snarepat.wrapAt(i) == 1) {
+            if(snareWrap == 1) {
                 Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_snareBuffer, \pan, 0, \amp, ~p3_drumsamp, \out, ~p3_drumVerbBus]);
             } {
-                if(index == 13 && (0.25.coin)) {
+                if(snareWrap == 2 && 0.1.coin) {
                     Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_snareBuffer, \pan, 0, \amp, ~p3_drumsamp, \out, ~p3_drumVerbBus]);
-                
                 };
             };
         };
         if(~p3_hatsOn) {
-            if(~p3_hatsBufferpat.wrapAt(i) == 1) {
+            if(hatsWrap == 1) {
                 Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_hatsBuffer, \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_drumsamp, \out, ~p3_drumVerbBus]);
             } {
-                if(~p3_hatsBufferpat === ~p3_hatsPats[\main] && (index == 1) && (0.25.coin)) {
+                if(hatsWrap == 2 && 0.25.coin) {
                     ~p3_double.({Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_hatsBuffer, \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_drumsamp, \out, ~p3_drumVerbBus])}, 2, 2);
-                
                 };
             };
         };
@@ -164,14 +177,6 @@
 };
 )
 
-// Capture melodic patterns
-// Guitar activity control
-// Guitar effects
-// Larger scale decisions - play / don't play for x time
-// Large pads every now and then
-// Changing from sets of drum patterns
-// Write possible structures for piece
-// Root note changes.
 (
 ~p3_server = {
     s.options.memSize = 2**18;
@@ -192,17 +197,18 @@
     ~p3_kickOn     = false;
     ~p3_snareOn    = false;
     ~p3_hatsOn     = false;
-    ~p3_kickpat    = [1, 0, 0, 0,      0, 0, 1, 1,     0, 0, 1, 0,     0, 0, 0, 0];
-    ~p3_snarepat   = [0, 0, 0, 1,      0, 0, 0, 0,     0, 0, 0, 0,     1, 0, 0, 0];
+    ~p3_kickPat    = [1, 0, 0, 0,      0, 0, 1, 1,     0, 0, 1, 0,     0, 0, 0, 0];
+    ~p3_snarePat   = [0, 0, 0, 1,      0, 0, 0, 0,     0, 0, 0, 0,     1, 2, 2, 2];
     ~p3_hatsPats = Dictionary.new;
     ~p3_hatsPats.add(\offbeat -> [0, 0, 1, 0]);
-    ~p3_hatsPats.add(\main -> [0, 0, 1, 0,      0, 1, 0, 0,     0, 1, 0, 0,     0, 0, 1, 0]);
+    ~p3_hatsPats.add(\main -> [0, 2, 1, 0,      0, 1, 0, 0,     0, 1, 0, 2,     0, 0, 1, 0]);
     ~p3_hatsPats.add(\quavers -> [1, 0]);
-    ~p3_hatsBufferpat = ~p3_hatsPats[\offbeat];
-    ~p3_hatsBufferpat = ~p3_hatsPats[\main];
+    ~p3_hatsPat = ~p3_hatsPats[\offbeat];
+    ~p3_hatsPat = ~p3_hatsPats[\main];
     
     ~p3_drumRoomInit = 0.2;
     ~p3_guitarRoomInit = 0.8;
+    ~p3_varsawRoomInit = 1;
     
     ~p3_guitarRetrig = 0.3;
     
@@ -258,6 +264,17 @@
         );
     }.add;    
     
+    SynthDef(\BSP3_VarSaw) { |out=0, freq=440, amp=0.25|
+        var sig = Mix.new(VarSaw.ar(freq * [0.5,1,2], 0, LFNoise1.kr(0.3,0.1,0.1), 0.1));
+        var line = Line.kr(20000, 1000, 1.5);
+        var lpf = LPF.ar(sig, line);
+        var env = EnvGen.ar(Env.linen(0.5, 0.75, 1, amp, 'sine'), doneAction: 2);
+
+        Out.ar(out,
+            lpf.dup * env
+        );
+    }.add;
+    
     "SynthDefs loaded".postln;
 };
 
@@ -265,6 +282,7 @@
     // Will need to have 4 channel busses and two reverbs per bus
     ~p3_drumVerbBus = Bus.audio(s, 2);
     ~p3_guitarVerbBus = Bus.audio(s, 2);
+    ~p3_varsawVerbBus = Bus.audio(s, 2);
     "Busses initialised".postln;
 };
 
@@ -376,7 +394,50 @@
     ~p3_mouseSynth = Synth(\BSP3_Mouse);
     ~p3_drumVerb = Synth(\BSP3_Reverb, [\in, ~p3_drumVerbBus, \damp, 0.4, \mix, 0.8, \room, ~p3_drumRoomInit]);
     ~p3_guitarVerb = Synth(\BSP3_Reverb, [\in, ~p3_guitarVerbBus, \damp, 0.4, \mix, 0.8, \room, ~p3_guitarRoomInit]);
-    
+    ~p3_varsawVerb = Synth(\BSP3_Reverb, [\in, ~p3_varsawVerbBus, \damp, 0.1, \mix, 1, \room, ~p3_varsawRoomInit]);
     "Synths started".postln;
 };
 )
+
+~xo = 0;
+x = [[4, 4], [3, 4], [5, 4], [1, 4],    [4, 4], [3, 4-~xo], [1, 1.5], [0, 1.5], [2, 1.5], [nil, 3.5]];
+x = [[5, 4], [6, 4], [7, 4], [4, 4],    [5, 4], [6, 4], [4, 8]]
+x = [[2, 2], [1, 2], [2, 1], [3, 2],    [2, 2], [1, 2], [2, 1], [0, 2],     [2, 2], [1, 2], [2, 1], [3, 2], [4, 4], [nil, 7]];
+({
+    ~xo.wait;
+    
+    10.do {
+        x.do { |item, i|
+            var wait = 0;
+            if(item[0].notNil) {
+                // Make these pan positions 4 way!
+                Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[item[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_guitaramp, \rate, 1]);
+                Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[item[0]], \pan, ~p3_x.linlin(0, 1, 1, -1), \amp, ~p3_guitaramp, \rate, 0.5]);
+                
+                Synth(\BSP3_VarSaw, [\freq, (~p3_root  + Scale.minor.degrees[item[0]]).midicps, \out, ~p3_varsawVerbBus]);
+                Synth(\BSP3_VarSaw, [\freq, (~p3_root  + 12 + Scale.minor.degrees[item[0]]).midicps, \out, ~p3_varsawVerbBus]);
+                
+                wait = wait + (item[1]/8);
+
+                (item[1]/8).wait;
+                Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[item[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_guitaramp/2, \rate, 2]);
+                wait = wait + (item[1]/8);
+                (item[1]/8).wait;
+                Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[item[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_guitaramp/2, \rate, 4]);
+            
+            };
+            (item[1] - wait).wait;
+        };
+    }
+}.fork(~p3_clock, quant:Quant(4))
+)
+
+ 
+// Capture melodic patterns
+// Guitar activity control
+// Guitar effects
+// Larger scale decisions - play / don't play for x time
+// Large pads every now and then
+// Changing from sets of drum patterns
+// Write possible structures for piece
+// Root note changes.
