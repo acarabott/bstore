@@ -14,10 +14,9 @@
 ~p3_playRoutines3.();
 ~p3_controlRoutines1.();
 
-~p3_reset.();
-~p3_stop.();
 ~p3_control.play
-~p3_control.stop;
+~p3_stop.();
+~p3_reset.();
 
 (
 ~p3_stop = {
@@ -78,6 +77,7 @@
     ~p3_guitarStart.stop;
     
     // Guitar melodies start
+    ~p3_guitarMelodyActivityLevel = 0.2;
     ~p3_guitarMelody.play(~p3_clock, Quant(4));
     // as this acumulates and hits 0.75 then do 
     ~p3_guitarMelodyActivityLevel = 0.75;
@@ -91,6 +91,7 @@
     ~p3_drumRoutine.stop;
     ~p3_guitarMelodyActivityLevel = 1;
     ~p3_bassNote = ~p3_root - 4;
+    // TODO BASS COMES UP
     ~p3_thickGuitarHarmony = true;
     // TODO Make this interactive
     ~p3_guitarMelodyOctave = 2**(~p3_y*2).floor;
@@ -114,7 +115,7 @@
     ~p3_drumReset.();
     ~p3_drumRoutine.play(~p3_clock, Quant(4));
     ~p3_drumBuild.play;
-    
+    // TODO varsaw fade out
     ~p3_guitarMelody.stop;
     ~p3_bassNote = ~p3_root;
     
@@ -318,12 +319,12 @@
       // Create weights for crazy section. Mostly in the middle octave.
       diaRateWeights = diaRates.collect({ |item, i|
           if(i < (x.size/4).floor) {
-              2
+              2;
           } {
               if(i > (x.size*0.5).floor) {
-                  1
+                  1;
               } {
-                  3
+                  3;
               };        
           };
 
@@ -356,7 +357,7 @@
                   currentRate = rates[rateIndex];
               };
           } {
-              // Start of each phrase, decide how long the next phrase should be
+              // Start of each phrase (choice of octave), decide how long the next phrase should be
               if( phraseIndex == 0) {
                   currentRate = diaRates.wchoose(diaRateWeights);
                   phraseLength = [8, 16].choose;
@@ -424,12 +425,16 @@
               };
 
               synthNotes.do { |synthNote, synthNotesIndex|
+                  var synthAmp, synthFreq;
+                  synthAmp = ~p3_amps[\varsaw] / synthNotes.size;
+                  synthFreq = (~p3_root + synthNote).midicps;
+                  
                   if(synthNotesIndex.odd) {
                       synthPan = synthPan.neg;
                   };
 
-                  Synth(\BSP3_VarSaw, [\amp, ~p3_amps[\varsaw] / synthNotes.size, \freq, (~p3_root + synthNote).midicps, \out, ~p3_varsawVerbBus, \pan, synthPan, \sus, 1, \rel, 2]);                
-                  Synth(\BSP3_VarSaw, [\amp, ~p3_amps[\varsaw] / synthNotes.size, \freq, (~p3_root + synthNote + 12).midicps, \out, ~p3_varsawVerbBus, \pan, synthPan, \sus, 1, \rel, 2]);                  
+                  Synth(\BSP3_VarSaw, [\amp, synthAmp, \freq, synthFreq, \out, ~p3_varsawVerbBus, \pan, synthPan, \sus, 1, \rel, 2]);                
+                  Synth(\BSP3_VarSaw, [\amp, synthAmp, \freq, synthFreq*2, \out, ~p3_varsawVerbBus, \pan, synthPan, \sus, 1, \rel, 2]);                  
               };            
           };
 
@@ -501,7 +506,7 @@
     ~p3_snarePats.add(\active ->    [0, 0, 0, 1,      0, 0, 1, 2,     1, 0, 2, 0,     1, 5, 5, 5]);
     ~p3_hatsPats.add(\offbeat ->    [0, 0, 1, 0]);
     ~p3_hatsPats.add(\main ->       [0, 10, 1, 0,      0, 1, 0, 0,     0, 1, 0, 10,     0, 0, 1, 0]);
-    ~p3_hatsPats.add(\quavers ->    [1, 5]);
+    ~p3_hatsPats.add(\quavers ->    [1, 0]);
     
     ~p3_snarePat    = ~p3_snarePats[\main];
     ~p3_hatsPat     = ~p3_hatsPats[\main];
@@ -580,15 +585,21 @@
         );
     }.add;    
     
-    SynthDef(\BSP3_VarSaw) { |out=0, freq=440, amp=0.25, pan=0, att=0.2, sus=0.75, rel=1|
+    // TODO Make rate and fgain interactive
+    // TODO replace mousey with interactive
+    SynthDef(\BSP3_VarSaw) { |out=0, freq=440, amp=0.25, pan=0, att=0.2, sus=0.75, rel=1, rate=0.5, fgain=2|
         var sig = Mix.new(VarSaw.ar(freq * [0.5,1,2], 0, LFNoise1.kr(0.3,0.1,0.1), 0.1));
-        var line = Line.kr(20000, 1000, 1.5);
+        var line = Line.kr(8000, 1000, 1);
         var lpf = LPF.ar(sig, line);
+        var moog = MoogFF.ar(lpf, SinOsc.kr(rate).range(400,10000), fgain);
         var env = EnvGen.ar(Env.linen(att, sus, rel, amp, 'sine'), doneAction: 2);
-
+        var madmoog = MoogFF.ar(lpf, line, MouseY.kr(4, 0)).range(-0.1, 0.1);
+        var final = Mix.ar([moog, madmoog]);
+        // madmoog = madmoog / max(0.1, Amplitude.ar(madmoog, 0, 0.1).min(0.1));
+        
         Out.ar(out,
             // TODO Pan4
-            Pan2.ar(lpf * env, 0);
+            Pan2.ar(final * env, 0);
             
         );
     }.add;
@@ -792,4 +803,4 @@
 // TODO Write possible structures for piece
 // TODO Root note changes.
 // TODO Guitar phrases of different no.
-
+// TODO Mixing 
