@@ -1,3 +1,5 @@
+~debug = false;
+
 ~p3_server.();
 ~p3_loadsynthdefs.();
 ~p3_variables.();
@@ -335,6 +337,8 @@
     ~p3_guitarStartProb = 1/16;
     ~p3_guitarActivityLevel = 0;
     ~p3_guitarMelodyCount = 0;
+    
+    ~p3_guitarInteractiveActivityLevel = 0.3
     "Variables initialised".postln;
 };
 
@@ -459,17 +463,17 @@
         collection;
     };
     
-    ~p3_guitarNote = {
+    ~p3_guitarNote = {|rate=1|
         var buffer, weights, nearest, sResolvers, neighbours;
         ~p3_guitarResolved = false;
         switch (~p3_guitarNoteCount)
             {1}  {
                 ~p3_guitarResolved = true;
-                "resolved!".postln;
+                // "resolved!".postln;
                 weights = 0!8;
                 if(~p3_guitarPhrasesCount == 1) {
                     nearest = ~p3_lastGuitar.nearestInList(~p3_phraseResolvers);
-                    "phrases resolved!".postln;
+                    // "phrases resolved!".postln;
                     ~p3_guitarPhrasesCount = 5;
                 } {
                     nearest = ~p3_lastGuitar.nearestInList(~p3_guitarResolvers);                    
@@ -482,7 +486,7 @@
                 ~p3_guitarPhrasesCount = ~p3_guitarPhrasesCount - 1;
             }
             {4}  {
-                "start".postln;
+                // "start".postln;
                 if(~p3_lastStarter.notNil && 0.5.coin) {
                     weights = ~p3_setNeighbours.(0!8, ~p3_getNeighbours.(~p3_lastStarter, ~p3_guitarBuffers.size-1), 1);
                     
@@ -493,15 +497,15 @@
             }
             {~p3_guitarNoteCount}    {
                 if(0.75.coin) {
-                    "step".postln;
+                    // "step".postln;
                     weights = ~p3_setNeighbours.(0!8, ~p3_getNeighbours.(~p3_lastGuitar, ~p3_guitarBuffers.size-1), 1);
                 } {
-                    "thirds".postln;
+                    // "thirds".postln;
                     weights = ~p3_setNeighbours.(0!8, ~p3_getNeighbours.(~p3_lastGuitar, ~p3_guitarBuffers.size-1, 2), 1);                    
                 };
             };
         
-        weights.postln;
+        // weights.postln;
         ~p3_guitarNoteCount = ~p3_guitarNoteCount - 1;
         
         buffer = ~p3_guitarBuffers.wchoose(weights.normalizeSum);
@@ -509,7 +513,7 @@
         if(~p3_guitarNoteCount == 4) {
             ~p3_lastStarter = ~p3_lastGuitar;
         };
-        Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, buffer, \pan, ~p3_y.linlin(0, 1, -1, 1), \amp, ~p3_guitaramp, \rate, 1]);
+        Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, buffer, \pan, ~p3_y.linlin(0, 1, -1, 1), \amp, ~p3_guitaramp, \rate, 1*rate]);
     };  
     
     "Functions loaded".postln;
@@ -548,6 +552,7 @@
 ~p3_interactiveGuitar = Routine {
     var rand;
     inf.do { |i|        
+        
         if(~p3_x >=0.5) {
             if(~rowdyguitar) {
                 rand = [1, 2].choose;
@@ -567,16 +572,71 @@
     };
 };
 
-~p3_guitarMelodies.add(\four -> [[7, 1.5], [4, 1.5], [5, 1.5], [2, 1.5], [nil, 4], [4, 1.5], [2, 1.5], [3, 1.5], [0, 1.5], [nil, 8]]);
-~p3_guitarMelodies.add(\five -> [[7, 4], [4, 4], [5, 4], [2, 4], [nil, 8], [4, 4], [2, 4], [4, 4], [0, 4], [nil, 16]]);
-~p3_guitarMelodies.add(\six -> [[0, 4], [1, 4], [2, 8],    [2, 4], [3, 4], [4, 8]]);
-~p3_guitarMelodies.add(\seven -> [[4, 4], [3, 6], [0, 2], [2, 2]]);
-~p3_guitarMelodies.add(\eight -> [[0, 2], [0, 2], [1, 2], [1, 2], [2, 2], [2, 2], [5, 2], [4, 2], [4, 8]]);
-~p3_guitarMelodies.add(\nine -> [[0, 2], [0, 2], [1, 2], [1, 2], [2, 2], [2, 2], [5, 2], [4, 2], [4, 4], [3, 2], [5, 1], [2, 4], [nil, 5]]);
+(
+Tdef(\guitar, {
+    var startTime = SystemClock.beats;
+    var rates = [0.5, 1, 1.5, 2, 3, 4];
+    var diaRates = [0.5, 1, 2, 4, 8];
+    var currentRate = rates[0];
+    var lastRateTime = startTime;
+    var rateIndex = 0;
+    var phraseLength = [8, 16].choose;
+    var wait;
+    
+    if(~debug) {
+        wait = 1;
+    } {
+        wait = 60;
+    };
+    
+    inf.do {|i|
+        var timeNow, runningTime, timeSinceRate;
+        timeNow = SystemClock.beats;
+        runningTime = timeNow - startTime;
+        timeSinceRate = timeNow - lastRateTime;
+        
+        
+        if(runningTime < (rates.size * wait)) {
+            if(~debug) {
+                "runningTime: ".post; (runningTime).postln;
+                "lastRateTime: ".post; (lastRateTime).postln;
+                "timeSinceRate: ".post; (timeSinceRate).postln;
+            };
+            if(timeSinceRate >= wait) {
+                lastRateTime = SystemClock.beats;
+                rateIndex = (runningTime/wait).floor.asInteger.min(rates.size - 1);
+                currentRate = rates[rateIndex];
+            };
+        } {
+            if( i % phraseLength == 0) {
+                currentRate = diaRates.choose;
+                phraseLength = [8, 16].choose;
+            };
+        };
+        
+        if(~debug) {
+            currentRate.postln;
+        };
+        rateIndex.postln;
+        if(rateIndex.linlin(0, rates.size-1, 0.3, 0.8).coin) {
+            ~p3_guitarNote.([currentRate, currentRate/2, currentRate*2].wchoose([0.8, 0.1, 1]));
+        };
+        if(rateIndex < (rates.size-1)) {
+            0.5.wait;
+        } {
+            0.25.wait;
+        };
+    }
+}).play(~p3_clock, quant:Quant(4));
+)
+ 
 
-~p3_guitaramp = 1
-~p3_varsawamp = 1
-~p3_thickGuitarHarmony = true
-~p3_guitarMelodies = Dictionary.new;
+~debug = true;
 
+~p3_guitarInteractiveActivityLevel = 1
 
+x = [0.5, 1, 1.5, 2, 3, 4];
+
+(0..x.size-1).do { |item, i|
+    item.linlin(0, x.size-1, 0.3, 1).postln;
+};
