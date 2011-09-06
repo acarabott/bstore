@@ -1,4 +1,4 @@
-~debug = false;
+~debug = true;
 
 ~p3_server.();
 ~p3_loadsynthdefs.();
@@ -30,8 +30,11 @@
     1.wait;
     "Bass Moving".postln;
     ~p3_bassMove = true;
-    // 10.wait;
-    1.wait;
+    if(~debug) {
+        1.wait;
+    } {
+        10.wait;
+    };
     "Drums start".postln;
     ~p3_drumRoutine.play(~p3_clock, Quant(4));
     ~p3_drumBuild.play;
@@ -40,11 +43,19 @@
     ~p3_guitarStart.play(~p3_clock, Quant(4));
     // TODO have this accumlate activity, once it hits threshold move onto next section
     // (4 * 60).wait;
-    10.wait;
+    if(~debug) {
+        10.wait;
+    } {
+        (4 * 60).wait;
+    };
     // When an activity level reaches 0.75 or so do
     ~p3_hatsPat = ~p3_hatsPats[\quavers];
     // (2 * 60).wait;
-    10.wait;
+    if(~debug) {
+        10.wait;
+    } {
+        (2*60).wait;
+    };
     ~p3_guitarStart.stop;
     
     // Guitar melodies start
@@ -52,7 +63,11 @@
     // as this acumulates and hits 0.75 then do 
     ~p3_guitarActivityLevel = 0.75;
     ~p3_snarePat = ~p3_snarePats[\active];
-    (3 * 60).wait;
+    if(~debug) {
+        10.wait;
+    } {
+        (3*60).wait;
+    };
     // Drums stop, guitar harmony thickens, bass changes to Lydian root
     ~p3_drumRoutine.stop;
     ~p3_guitarActivityLevel = 1;
@@ -63,10 +78,20 @@
     
     // TODO fade ~p3_guitaramp down to 0
     // TODO fade ~p3_varsawamp up to 0.8
-    (3 * 60).wait;    
+    if(~debug) {
+        10.wait;
+    } {
+        (3*60).wait;
+    };
+
     ~p3_drumBuild.reset;
     ~p3_drumRoutine.reset;
-    10.wait;
+    if(~debug) {
+        10.wait;
+    } {
+        (3*60).wait;
+    };
+
     ~p3_drumReset.();
     ~p3_drumRoutine.play(~p3_clock, Quant(4));
     ~p3_drumBuild.play;
@@ -338,7 +363,7 @@
     ~p3_guitarActivityLevel = 0;
     ~p3_guitarMelodyCount = 0;
     
-    ~p3_guitarInteractiveActivityLevel = 0.3
+    ~p3_guitarInteractiveActivityLevel = 0.3;
     "Variables initialised".postln;
 };
 
@@ -380,11 +405,11 @@
         );
     }.add;    
     
-    SynthDef(\BSP3_VarSaw) { |out=0, freq=440, amp=0.25, pan=0|
+    SynthDef(\BSP3_VarSaw) { |out=0, freq=440, amp=0.25, pan=0, att=0.2, sus=0.75, rel=1|
         var sig = Mix.new(VarSaw.ar(freq * [0.5,1,2], 0, LFNoise1.kr(0.3,0.1,0.1), 0.1));
         var line = Line.kr(20000, 1000, 1.5);
         var lpf = LPF.ar(sig, line);
-        var env = EnvGen.ar(Env.linen(0.2, 0.75, 1, amp, 'sine'), doneAction: 2);
+        var env = EnvGen.ar(Env.linen(att, sus, rel, amp, 'sine'), doneAction: 2);
 
         Out.ar(out,
             // TODO Pan4
@@ -410,7 +435,10 @@
     ~p3_mouseResponder.action_({|t, r, msg|
         ~p3_x = msg[3];
         ~p3_y = msg[4];
-        // Move updating routines to here...
+        // TODO Move updating routines to here?...
+        
+        // TODO Remove this
+        ~p3_guitarInteractiveActivityLevel = ~p3_y;
     });
     
     "Responders loaded".postln;
@@ -435,11 +463,11 @@
         "Drums reset".postln;
     };
     
-    ~p3_double = {|func, mult=2, div=2|
+    ~p3_double = {|func, mult=2, div=2, wait=0.5|
         {
             mult.do { |i|
                 func.();
-                (0.5 / div).wait;
+                (wait / div).wait;
             };
         }.fork(~p3_clock)
     };
@@ -463,7 +491,7 @@
         collection;
     };
     
-    ~p3_guitarNote = {|rate=1|
+    ~p3_guitarNote = {|rate=1, amp=1|
         var buffer, weights, nearest, sResolvers, neighbours;
         ~p3_guitarResolved = false;
         switch (~p3_guitarNoteCount)
@@ -513,7 +541,7 @@
         if(~p3_guitarNoteCount == 4) {
             ~p3_lastStarter = ~p3_lastGuitar;
         };
-        Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, buffer, \pan, ~p3_y.linlin(0, 1, -1, 1), \amp, ~p3_guitaramp, \rate, 1*rate]);
+        Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, buffer, \pan, ~p3_y.linlin(0, 1, -1, 1), \amp, ~p3_guitaramp * amp, \rate, 1*rate]);
     };  
     
     "Functions loaded".postln;
@@ -575,68 +603,128 @@
 (
 Tdef(\guitar, {
     var startTime = SystemClock.beats;
-    var rates = [0.5, 1, 1.5, 2, 3, 4];
+    var rates = [1, 1.5, 2, 3, 4];
     var diaRates = [0.5, 1, 2, 4, 8];
     var currentRate = rates[0];
     var lastRateTime = startTime;
     var rateIndex = 0;
     var phraseLength = [8, 16].choose;
-    var wait;
+    var synthOn = false;
+    var sectionWait;
+    var diaRateWeights;
+    var synthStartTime;
+    
+    diaRateWeights = diaRates.collect({ |item, i|
+        if(i < (x.size/4).floor) {
+            2
+        } {
+            if(i > (x.size*0.5).floor) {
+                1
+            } {
+                3
+            };        
+        };
+
+    }).normalizeSum;
     
     if(~debug) {
-        wait = 1;
+        sectionWait = 1;
     } {
-        wait = 60;
+        sectionWait = 60;
     };
-    
     inf.do {|i|
-        var timeNow, runningTime, timeSinceRate;
+        var timeNow, runningTime, timeSinceRate, mult, wait, phraseIndex, rate, amp, scale, synthNoteIndex, synthNotes, synthPan;
         timeNow = SystemClock.beats;
         runningTime = timeNow - startTime;
         timeSinceRate = timeNow - lastRateTime;
+        phraseIndex = i % phraseLength;
         
-        
-        if(runningTime < (rates.size * wait)) {
+        if(runningTime < (rates.size * sectionWait)) {
             if(~debug) {
-                "runningTime: ".post; (runningTime).postln;
-                "lastRateTime: ".post; (lastRateTime).postln;
-                "timeSinceRate: ".post; (timeSinceRate).postln;
+                // "runningTime: ".post; (runningTime).postln;
+                // "lastRateTime: ".post; (lastRateTime).postln;
+                // "timeSinceRate: ".post; (timeSinceRate).postln;
             };
-            if(timeSinceRate >= wait) {
+            if(timeSinceRate >= sectionWait) {
                 lastRateTime = SystemClock.beats;
-                rateIndex = (runningTime/wait).floor.asInteger.min(rates.size - 1);
+                rateIndex = (runningTime/sectionWait).floor.asInteger.min(rates.size - 1);
                 currentRate = rates[rateIndex];
             };
         } {
-            if( i % phraseLength == 0) {
-                currentRate = diaRates.choose;
+            if( phraseIndex == 0) {
+                currentRate = diaRates.wchoose(diaRateWeights);
                 phraseLength = [8, 16].choose;
             };
         };
         
         if(~debug) {
-            currentRate.postln;
+            // "currentRate: ".post; (currentRate).postln;
+            // "rateIndex: ".post; (rateIndex).postln;
+            // "phraseIndex: ".post; (phraseIndex).postln;
         };
-        rateIndex.postln;
-        if(rateIndex.linlin(0, rates.size-1, 0.3, 0.8).coin) {
-            ~p3_guitarNote.([currentRate, currentRate/2, currentRate*2].wchoose([0.8, 0.1, 1]));
-        };
+        
         if(rateIndex < (rates.size-1)) {
-            0.5.wait;
+            wait = 0.5;
         } {
-            0.25.wait;
+            wait = 0.25;
+            if(synthOn.not) {
+                synthOn = true;
+                synthStartTime = timeNow;
+            };
         };
+        
+        if((i % 32) == 0 && synthOn) {
+            synthNotes = List[];
+            
+            if(rate == 3) {
+                scale = Scale.minorPentatonic.degrees;
+            } {
+                scale = Scale.minor.degrees;
+            };
+            // TODO this pan interactive
+            synthPan = (-1,-0.9..1).choose;
+            synthNoteIndex = (scale.size-1).rand;
+            synthNotes.add(scale[synthNoteIndex]);
+
+            // if(timeNow - synthStartTime > (3 * 60)) {
+                synthNotes.add(scale.wrapAt(synthNoteIndex + [2, -2].choose));
+            // }
+            "synthNotes: ".post; (synthNotes).postln;
+            synthNotes.do { |synthNote, synthNotesIndex|
+                "synthNote: ".post; (synthNote).postln;
+                if(synthNotesIndex.odd) {
+                    synthPan = synthPan.neg;
+                };
+                
+                Synth(\BSP3_VarSaw, [\amp, ~p3_varsawamp / synthNotes.size, \freq, (~p3_root + synthNote).midicps, \out, ~p3_varsawVerbBus, \pan, synthPan, \sus, 1, \rel, 2]);                
+                Synth(\BSP3_VarSaw, [\amp, ~p3_varsawamp / synthNotes.size, \freq, (~p3_root + synthNote + 12).midicps, \out, ~p3_varsawVerbBus, \pan, synthPan, \sus, 1, \rel, 2]);                  
+            };            
+        };
+        
+        if(((~p3_guitarInteractiveActivityLevel*2) * rateIndex.linlin(0, rates.size-1, 0.3, 0.8)).coin) {
+            
+            if((~p3_guitarInteractiveActivityLevel/2).coin) {
+                mult = 2;
+            } {
+                mult = 1;
+            };
+            
+            rate = [currentRate, currentRate/2, currentRate*2].wchoose([0.8, 0.1, 1]);
+            amp = rate.linlin(rates.first, rates.last, 1, 0.4);
+            
+            if(~debug) {
+                // "mult: ".post; (mult).postln;
+                // "rate: ".post; (rate).postln;
+                // "amp: ".post; (amp).postln;
+            };
+            ~p3_double.(~p3_guitarNote.(rate, amp), mult, mult, wait);
+            
+        };
+        
+        if(~debug) {
+            // "wait: ".post; (wait).postln;
+        };
+        wait.wait;
     }
-}).play(~p3_clock, quant:Quant(4));
+});
 )
- 
-
-~debug = true;
-
-~p3_guitarInteractiveActivityLevel = 1
-
-x = [0.5, 1, 1.5, 2, 3, 4];
-
-(0..x.size-1).do { |item, i|
-    item.linlin(0, x.size-1, 0.3, 1).postln;
-};
