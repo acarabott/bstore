@@ -8,6 +8,7 @@
 ~p3_functions.();
 ~p3_buffers.();
 ~p3_synths.();
+~p3_createMixer.();
 
 ~p3_stop.();
 ~p3_stop = {
@@ -76,8 +77,8 @@
     // TODO Make this interactive
     ~p3_guitarMelodyOctave = 2**(~p3_y*2).floor;
     
-    // TODO fade ~p3_guitaramp down to 0
-    // TODO fade ~p3_varsawamp up to 0.8
+    // TODO fade ~p3_amps[\guitar] down to 0
+    // TODO fade ~p3_amps[\varsaw] up to 0.8
     if(~debug) {
         10.wait;
     } {
@@ -156,8 +157,8 @@
             };
         };
         
-        Synth(\BSP3_Bass, [\freq, note.midicps, \amp, amp*~p3_bassamp]);        
-        Synth(\BSP3_Bass, [\freq, (note-12).midicps, \amp, amp*~p3_bassamp]);
+        Synth(\BSP3_Bass, [\freq, note.midicps, \amp, amp*~p3_amps[\bass]]);        
+        Synth(\BSP3_Bass, [\freq, (note-12).midicps, \amp, amp*~p3_amps[\bass]]);
         
         0.5.wait;
     }
@@ -173,29 +174,29 @@
         hatsWrap = ~p3_hatsPat.wrapAt(i);
         if(~p3_kickOn) {
             if(kickWrap == 1) {
-                Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_kickBuffer, \pan, 0, \amp, ~p3_drumsamp, \out, ~p3_drumVerbBus]);
+                Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_kickBuffer, \pan, 0, \amp, ~p3_amps[\drums] * ~p3_amps[\drum_kick], \out, ~p3_drumVerbBus]);
             };
         };
         if(~p3_snareOn) {
             if(snareWrap == 1) {
-                Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_snareBuffer, \pan, 0, \amp, ~p3_drumsamp, \out, ~p3_drumVerbBus]);
+                Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_snareBuffer, \pan, 0, \amp, ~p3_amps.add(\drum_snare -> 1);, \out, ~p3_drumVerbBus]);
             } {
                 if(snareWrap > 1 && (1 / snareWrap).coin) {
-                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_snareBuffer, \pan, 0, \amp, ~p3_drumsamp, \out, ~p3_drumVerbBus]);
+                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_snareBuffer, \pan, 0, \amp, ~p3_amps[\drums] * ~p3_amps[\drum_snare], \out, ~p3_drumVerbBus]);
                     
                 };
             };
         };
         if(~p3_hatsOn) {
             if(hatsWrap == 1) {
-                Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_hatsBuffer, \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_drumsamp, \out, ~p3_drumVerbBus]);
+                Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_hatsBuffer, \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus]);
             } {
                 if(hatsWrap > 1 && (1 / hatsWrap).coin) {
-                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_hatsBuffer, \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_drumsamp, \out, ~p3_drumVerbBus]);
+                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_hatsBuffer, \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus]);
                 };
                 
                 if(~p3_hatsPat === ~p3_hatsPats[\main] && (hatsWrap == 2)) {
-                    ~p3_double.({Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_hatsBuffer, \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_drumsamp, \out, ~p3_drumVerbBus])}, 2, 2);
+                    ~p3_double.({Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_hatsBuffer, \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus])}, 2, 2);
                 };
             };
         };
@@ -239,10 +240,10 @@
 
 // ~p3_guitarMelody.play(~p3_clock, Quant(4));
 // ~p3_guitarMelody.stop
-// ~p3_varsawamp = 0.5;
+// ~p3_amps[\varsaw] = 0.5;
 // ~p3_thickGuitarHarmony = true;
-// ~p3_guitaramp = 1;
-// ~p3_bassamp = 1
+// ~p3_amps[\guitar] = 1;
+// ~p3_amps[\bass] = 1
 ~p3_guitarMelody = Routine {
     inf.do {|i|
         var melody;
@@ -257,8 +258,8 @@
                 
                 if(melody[0].notNil) {
                     // TODO Make these pan positions 4 way!
-                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[melody[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_guitaramp, \rate, 1*~p3_guitarMelodyOctave]);
-                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[melody[0]], \pan, ~p3_x.linlin(0, 1, 1, -1), \amp, ~p3_guitaramp, \rate, 0.5*~p3_guitarMelodyOctave]);
+                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[melody[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\guitar], \rate, 1*~p3_guitarMelodyOctave]);
+                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[melody[0]], \pan, ~p3_x.linlin(0, 1, 1, -1), \amp, ~p3_amps[\guitar], \rate, 0.5*~p3_guitarMelodyOctave]);
                 
                     if(~p3_guitarMelodyCount >= 3) {
                         synths.add([~p3_root  + Scale.minor.degrees.wrapAt(melody[0]), ~p3_x.linlin(0, 1, -1, 1)]);
@@ -273,15 +274,15 @@
                     };
                     
                     synths.do { |synth|
-                        Synth(\BSP3_VarSaw, [\amp, ~p3_varsawamp/synths.size, \freq, synth[0].midicps, \out, ~p3_varsawVerbBus, \pan, synth[1]]);
+                        Synth(\BSP3_VarSaw, [\amp, ~p3_amps[\varsaw]/synths.size, \freq, synth[0].midicps, \out, ~p3_varsawVerbBus, \pan, synth[1]]);
                     };
                     wait = wait + (melody[1]/8);
 
                     (melody[1]/8).wait;
-                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[melody[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_guitaramp/2, \rate, 2*~p3_guitarMelodyOctave]);
+                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[melody[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\guitar]/2, \rate, 2*~p3_guitarMelodyOctave]);
                     wait = wait + (melody[1]/8);
                     (melody[1]/8).wait;
-                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[melody[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_guitaramp/2, \rate, 4*~p3_guitarMelodyOctave]);
+                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[melody[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\guitar]/2, \rate, 4*~p3_guitarMelodyOctave]);
             
                 };
                 (melody[1] - wait).wait;
@@ -306,10 +307,14 @@
 };
 ~p3_variables = {
     ~p3_clock = TempoClock(160/60);
-    ~p3_bassamp = 1;
-    ~p3_guitaramp = 1;
-    ~p3_drumsamp = 1;
-    ~p3_varsawamp = 0.4;
+    ~p3_amps = Dictionary.new;
+    ~p3_amps.add(\bass -> 1);
+    ~p3_amps.add(\guitar -> 1);
+    ~p3_amps.add(\varsaw -> 0.4);
+    ~p3_amps.add(\drums -> 1);
+    ~p3_amps.add(\drum_kick -> 1);
+    ~p3_amps.add(\drum_snare -> 1);
+    ~p3_amps.add(\drum_hats -> 1);
     
     ~p3_root = 50;
     ~p3_bassNote = ~p3_root;
@@ -446,6 +451,46 @@
 )
 (
 ~p3_functions = {
+    // GUI
+    ~p3_createMixer = {
+        ~p3_mixer = Window("BStorePiece3 Mixer", Rect(100, 100, 400, 600)).front;
+        ~p3_mixer.view.addFlowLayout;
+        ~p3_mixerCompBounds = (~p3_mixer.bounds.width - (~p3_mixer.view.decorator.gap.x * 2))@((~p3_mixer.bounds.height/2) - (~p3_mixer.view.decorator.gap.y*2));
+        ~p3_mixerTop = CompositeView(~p3_mixer, ~p3_mixerCompBounds);
+        ~p3_mixerTop.addFlowLayout;
+        ~p3_mixerBot = CompositeView(~p3_mixer, ~p3_mixerCompBounds);
+        ~p3_mixerBot.addFlowLayout;
+        ~p3_sliders = List[];
+        ~p3_amps.asSortedArray.do { |item|
+            var split = item[0].asString.split($_);
+            var view, width;
+
+            width = 50;
+            if(split[0].contains("drum")) {
+                view = ~p3_mixerBot;
+                if(split[0].contains("s").not) {
+                    width = 31;
+                };
+            } {
+                view = ~p3_mixerTop;        
+            };
+            ~p3_sliders.add(EZSlider(
+                view, 
+                width@(~p3_mixer.bounds.height*0.45), 
+                item[0].asString.split($_).last, 
+                ControlSpec.new(0, 1.5, \lin, 0.01, 1, "amp"), 
+                {|slider|
+                    ~p3_amps[item[0]] = slider.value;
+                },
+                item[1],
+                layout:\vert
+                )
+            );
+            ~p3_sliders.last.labelView.align_(\center);
+        };    
+        "Mixer created".postln;
+    };
+    
     ~p3_drumReset = {
         //  Initialise
         ~p3_hatsOn     = false;
@@ -541,7 +586,7 @@
         if(~p3_guitarNoteCount == 4) {
             ~p3_lastStarter = ~p3_lastGuitar;
         };
-        Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, buffer, \pan, ~p3_y.linlin(0, 1, -1, 1), \amp, ~p3_guitaramp * amp, \rate, 1*rate]);
+        Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, buffer, \pan, ~p3_y.linlin(0, 1, -1, 1), \amp, ~p3_amps[\guitar] * amp, \rate, 1*rate]);
     };  
     
     "Functions loaded".postln;
@@ -696,8 +741,8 @@ Tdef(\guitar, {
                     synthPan = synthPan.neg;
                 };
                 
-                Synth(\BSP3_VarSaw, [\amp, ~p3_varsawamp / synthNotes.size, \freq, (~p3_root + synthNote).midicps, \out, ~p3_varsawVerbBus, \pan, synthPan, \sus, 1, \rel, 2]);                
-                Synth(\BSP3_VarSaw, [\amp, ~p3_varsawamp / synthNotes.size, \freq, (~p3_root + synthNote + 12).midicps, \out, ~p3_varsawVerbBus, \pan, synthPan, \sus, 1, \rel, 2]);                  
+                Synth(\BSP3_VarSaw, [\amp, ~p3_amps[\varsaw] / synthNotes.size, \freq, (~p3_root + synthNote).midicps, \out, ~p3_varsawVerbBus, \pan, synthPan, \sus, 1, \rel, 2]);                
+                Synth(\BSP3_VarSaw, [\amp, ~p3_amps[\varsaw] / synthNotes.size, \freq, (~p3_root + synthNote + 12).midicps, \out, ~p3_varsawVerbBus, \pan, synthPan, \sus, 1, \rel, 2]);                  
             };            
         };
         
