@@ -562,11 +562,13 @@
     
     }.add;
 
-    SynthDef(\BSP3_Sampler) { |out=0, buf=0, amp=0.5, pan=0, rate=1|
+    SynthDef(\BSP3_Sampler) { |out=0, buf=0, amp=0.5, pan=0, rate=1, dur=8, tail=1|
         var sig = PlayBuf.ar(1, buf, BufRateScale.kr(buf)*rate, doneAction: 2)*amp;
+        var env = EnvGen.ar(Env.new([1,1,0], [dur, tail]), doneAction: 2);
+        
         Out.ar(out,
             // TODO Pan4
-            Pan2.ar(sig, pan);
+            Pan2.ar(sig*env, pan);
         );
     }.add;
 
@@ -696,7 +698,7 @@
         {
             mult.do { |i|
                 func.(i);
-                (wait / div).wait;
+                (wait / (div)).wait;
             };
         }.fork(~p3_clock)
     };
@@ -829,71 +831,98 @@
 ~p3_drumWildPats.add(\kick -> ~p3_drumWildKickPats.choose); ~p3_drumWildPats[\kick].postln;
 ~p3_drumWildPats.add(\snare -> ~p3_drumWildSnarePats.choose); ~p3_drumWildPats[\snare].postln;
 ~p3_drumWildPats.add(\hats -> ~p3_drumWildHatsPats.choose); ~p3_drumWildPats[\hats].postln;
-~p3_drumWildPats.add(\all -> []);
+~p3_drumWildPats.add(\all -> true);
 
 
-~p3_buffers.collect({ |item, i| 
-    if(item.key == \kick) {
-        true
-    };
-})
+~p3_drumWildRateMoves = false;
 
-~p3_drumWildRateMoves = true;
 (
+
 Tdef(\drumwild, {
     // TODO Reactive panning on this
     // TODO Divide up activity levels based on quarters. One for rate other for madness
     var rateSig = Env.new([1, 2, 1, 0.05], [1,0.5, 1]).asSignal(100);
     var drumBufs = [~p3_buffers[\kick], ~p3_buffers[\snare], ~p3_buffers[\hats]];
-    var multArray = [1, 2, 3, 4, 6, 8, 12, 16, 32];
+    var multArray = [1, 2, 3, 4, 6, 8, 12, 16];
+    var playNext = true;
+    var doubleWait = 0.5;
+    // var multArray = [3];
+    
     inf.do {|i|
-
         ~p3_drumWildPats.keysValuesDo { |key, value|
             var item, rate, rateFunc, mult, div;
             rate = rateSig[~p3_y.linlin(0, 1, 0, rateSig.size-1).floor];
             if(key != \all) {
                 item = value.wrapAt(i);
         
-        
+                if(~debug) {
+                    // "item: ".post; (item).postln;
+                };
                 if(item > 0 && (1/item).coin) {
-                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[key], \pan, 0, \amp, ~p3_amps[\drums] * ~p3_amps[(\drum_ ++ key).asSymbol], \rate, rate, \out, ~p3_drumVerbBus]);
+                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[key], \pan, 0, \amp, ~p3_amps[\drums] * ~p3_amps[(\drum_ ++ key).asSymbol], \rate, rate, \out, ~p3_drumVerbBus, \dur, 0.25, \tail, 0.25]);
                 };
             } {
-                if(~p3_x.max(0.3).coin) {
-                    item = drumBufs.choose;
+                if(value) {
+                    if(playNext) {
+                        if(~p3_x.max(0.5).coin) {
+                            item = drumBufs.choose;
                     
-                    if(~p3_x > 0.5 && (0.5.coin)) {
-                        mult = ~p3_x.linlin(0.5, 1, 0, multArray.size).floor;
-                        if(0.25.coin) {
-                            div = [2, 4].choose;
-                        } {
-                            div = 1;
-                        };
+                            if(~p3_x > 0.5 && (1.coin)) {
+                                mult = multArray[~p3_x.linlin(0.5, 1, 0, multArray.size).floor];
+                                if(0.25.coin) {
+                                    div = [2, 4].choose;
+                                } {
+                                    div = 1;
+                                };
                         
-                        div = div * mult;
-                    } {
-                        mult = 1;
-                        div = 1;
-                    };
+                                div = div * mult;
+                            } {
+                                mult = 1;
+                                div = 1;
+                            };
                     
-                    if(~p3_drumWildRateMoves && mult > 1) {
-                        if(0.5.coin) {
-                            rateFunc = {|ri| rate - (ri/10)};
-                        } {
-                            rateFunc = {|ri| rate + (ri/10)};
-                        };
+                            if(mult > 1) {
+                                if(~p3_drumWildRateMoves && (mult > 1)) {
+                                    if(0.5.coin) {
+                                        rateFunc = {|ri| rate - (ri/10)};
+                                    } {
+                                        rateFunc = {|ri| rate + (ri/10)};
+                                    };
+                                } {
+                                    rateFunc = {|ri| rate};
+                                };
                         
+                                if(0.coin) {
+                                    playNext = false;
+                                    doubleWait = 1;
+                                };
+                        
+                            } {
+                                rateFunc = {|ri| rate};
+                            };
+                    
+                            if(~debug) {
+                                "item: ".post; (item).postln;
+                                "mult: ".post; (mult).postln;
+                                "div: ".post; (div).postln;
+                                "doubleWait: ".post; (doubleWait).postln;
+                                "rate: ".post; (rate).postln;
+                                "rateFunc: ".post; (rateFunc.()).postln;
+                            };
+                    
+                    
+                            ~p3_double.(
+                                {|di|
+                                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, item, \pan, [~p3_x, ~p3_y].choose, \amp, ~p3_amps[\drums] * ~p3_amps[(\drum_ ++ ~p3_buffers.findKeyForValue(item)).asSymbol], \rate, rateFunc.(di), \out, ~p3_drumVerbBus, \dur, 0.25, \tail, 0.25])
+                                },
+                                mult,
+                                div,
+                                doubleWait;
+                            );
+                        };
                     } {
-                        rateFunc = {|ri| rate};
+                        playNext = true;
                     };
-                    ~p3_double.(
-                        {|di|
-                            Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, item, \pan, [~p3_x, ~p3_y].choose, \amp, ~p3_amps[\drums] * ~p3_amps[(\drum_ ++ ~p3_buffers.findKeyForValue(item)).asSymbol], \rate, rateFunc.(di), \out, ~p3_drumVerbBus])
-                        },
-                        mult,
-                        div,
-                        0.5
-                    );
                 };
             };
         };
@@ -906,48 +935,7 @@ Tdef(\drumwild, {
 });
 )
 
-~p3_buffers.findKeyForValue([~p3_buffers[\kick], ~p3_buffers[\snare], ~p3_buffers[\hats]].choose)
 Tdef(\drumwild).play(~p3_clock, quant:Quant(4));
-
-~p3_drumRoutine = Routine {
-    inf.do {|i|
-        var index = i%16;
-        var mult = 1;
-        var kickWrap, snareWrap, hatsWrap;
-        kickWrap = ~p3_kickPat.wrapAt(i);
-        snareWrap = ~p3_snarePat.wrapAt(i);
-        hatsWrap = ~p3_hatsPat.wrapAt(i);
-        if(~p3_kickOn) {
-            if(kickWrap == 1) {
-                Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\kick], \pan, 0, \amp, ~p3_amps[\drums] * ~p3_amps[\drum_kick], \out, ~p3_drumVerbBus]);
-            };
-        };
-        if(~p3_snareOn) {
-            if(snareWrap == 1) {
-                Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\snare], \pan, 0, \amp, ~p3_amps[\drums] * ~p3_amps[\drum_snare], \out, ~p3_drumVerbBus]);
-            } {
-                if(snareWrap > 1 && (1 / snareWrap).coin) {
-                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\snare], \pan, 0, \amp, ~p3_amps[\drums] * ~p3_amps[\drum_snare], \out, ~p3_drumVerbBus]);
-                
-                };
-            };
-        };
-        if(~p3_hatsOn) {
-            if(hatsWrap == 1) {
-                Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\hats], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus]);
-            } {
-                if(hatsWrap > 1 && (1 / hatsWrap).coin) {
-                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\hats], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus]);
-                };
-            
-                if(~p3_hatsPat === ~p3_hatsPats[\main] && (hatsWrap == 2)) {
-                    ~p3_double.({|i| Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\hats], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus])}, 2, 2);
-                };
-            };
-        };
-        0.5.wait;
-    };
-};
-// TODO NOW LOOK INTO FUCKING 300 SYNTHS. possibly played with no buffer
-
-
+Tdef(\drumwild).stop
+~p3_drumVerb.set(\room, ~p3_drumRoomInit);
+~p3_drumVerb.set(\mix, 0.5);
