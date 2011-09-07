@@ -201,29 +201,29 @@
             hatsWrap = ~p3_hatsPat.wrapAt(i);
             if(~p3_kickOn) {
                 if(kickWrap == 1) {
-                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_kickBuffer, \pan, 0, \amp, ~p3_amps[\drums] * ~p3_amps[\drum_kick], \out, ~p3_drumVerbBus]);
+                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\kick], \pan, 0, \amp, ~p3_amps[\drums] * ~p3_amps[\drum_kick], \out, ~p3_drumVerbBus]);
                 };
             };
             if(~p3_snareOn) {
                 if(snareWrap == 1) {
-                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_snareBuffer, \pan, 0, \amp, ~p3_amps[\drums] * ~p3_amps[\drum_snare], \out, ~p3_drumVerbBus]);
+                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\snare], \pan, 0, \amp, ~p3_amps[\drums] * ~p3_amps[\drum_snare], \out, ~p3_drumVerbBus]);
                 } {
                     if(snareWrap > 1 && (1 / snareWrap).coin) {
-                        Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_snareBuffer, \pan, 0, \amp, ~p3_amps[\drums] * ~p3_amps[\drum_snare], \out, ~p3_drumVerbBus]);
+                        Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\snare], \pan, 0, \amp, ~p3_amps[\drums] * ~p3_amps[\drum_snare], \out, ~p3_drumVerbBus]);
                     
                     };
                 };
             };
             if(~p3_hatsOn) {
                 if(hatsWrap == 1) {
-                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_hatsBuffer, \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus]);
+                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\hats], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus]);
                 } {
                     if(hatsWrap > 1 && (1 / hatsWrap).coin) {
-                        Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_hatsBuffer, \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus]);
+                        Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\hats], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus]);
                     };
                 
                     if(~p3_hatsPat === ~p3_hatsPats[\main] && (hatsWrap == 2)) {
-                        ~p3_double.({Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_hatsBuffer, \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus])}, 2, 2);
+                        ~p3_double.({Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\hats], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus])}, 2, 2);
                     };
                 };
             };
@@ -262,8 +262,8 @@
                 
                     if(melody[0].notNil) {
                         // TODO Make these pan positions 4 way!
-                        Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[melody[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\guitar], \rate, 1*~p3_guitarMelodyOctave]);
-                        Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[melody[0]], \pan, ~p3_x.linlin(0, 1, 1, -1), \amp, ~p3_amps[\guitar], \rate, 0.5*~p3_guitarMelodyOctave]);
+                        Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_buffers[\guitar][melody[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\guitar], \rate, 1*~p3_guitarMelodyOctave]);
+                        Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_buffers[\guitar][melody[0]], \pan, ~p3_x.linlin(0, 1, 1, -1), \amp, ~p3_amps[\guitar], \rate, 0.5*~p3_guitarMelodyOctave]);
                 
                         if(~p3_guitarMelodyCount >= 3) {
                             synths.add([~p3_root  + Scale.minor.degrees.wrapAt(melody[0]), ~p3_x.linlin(0, 1, -1, 1)]);
@@ -283,10 +283,10 @@
                         wait = wait + (melody[1]/8);
 
                         (melody[1]/8).wait;
-                        Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[melody[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\guitar]/2, \rate, 2*~p3_guitarMelodyOctave]);
+                        Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_buffers[\guitar][melody[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\guitar]/2, \rate, 2*~p3_guitarMelodyOctave]);
                         wait = wait + (melody[1]/8);
                         (melody[1]/8).wait;
-                        Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_guitarBuffers[melody[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\guitar]/2, \rate, 4*~p3_guitarMelodyOctave]);
+                        Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_buffers[\guitar][melody[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\guitar]/2, \rate, 4*~p3_guitarMelodyOctave]);
             
                     };
                     (melody[1] - wait).wait;
@@ -743,7 +743,7 @@
             {4}  {
                 // "start".postln;
                 if(~p3_lastStarter.notNil && 0.5.coin) {
-                    weights = ~p3_setNeighbours.(0!8, ~p3_getNeighbours.(~p3_lastStarter, ~p3_guitarBuffers.size-1), 1);
+                    weights = ~p3_setNeighbours.(0!8, ~p3_getNeighbours.(~p3_lastStarter, ~p3_buffers[\guitar].size-1), 1);
                     
                 } {
                     weights = [2,1,2,1,2,1,2,2];
@@ -753,18 +753,18 @@
             {~p3_guitarNoteCount}    {
                 if(0.75.coin) {
                     // "step".postln;
-                    weights = ~p3_setNeighbours.(0!8, ~p3_getNeighbours.(~p3_lastGuitar, ~p3_guitarBuffers.size-1), 1);
+                    weights = ~p3_setNeighbours.(0!8, ~p3_getNeighbours.(~p3_lastGuitar, ~p3_buffers[\guitar].size-1), 1);
                 } {
                     // "thirds".postln;
-                    weights = ~p3_setNeighbours.(0!8, ~p3_getNeighbours.(~p3_lastGuitar, ~p3_guitarBuffers.size-1, 2), 1);                    
+                    weights = ~p3_setNeighbours.(0!8, ~p3_getNeighbours.(~p3_lastGuitar, ~p3_buffers[\guitar].size-1, 2), 1);                    
                 };
             };
         
         // weights.postln;
         ~p3_guitarNoteCount = ~p3_guitarNoteCount - 1;
         
-        buffer = ~p3_guitarBuffers.wchoose(weights.normalizeSum);
-        ~p3_lastGuitar = ~p3_guitarBuffers.indexOf(buffer);
+        buffer = ~p3_buffers[\guitar].wchoose(weights.normalizeSum);
+        ~p3_lastGuitar = ~p3_buffers[\guitar].indexOf(buffer);
         if(~p3_guitarNoteCount == 4) {
             ~p3_lastStarter = ~p3_lastGuitar;
         };
@@ -775,10 +775,11 @@
 };
 
 ~p3_buffers = {
-    ~p3_guitarBuffers = "/Users/arthurc/Documents/programming/computerMusic/bstore/audio/guitarD/*.aif".pathMatch.collect {|file| Buffer.read(s, file)};
-    ~p3_kickBuffer = Buffer.read(s, "sounds/kick.aif");
-    ~p3_snareBuffer = Buffer.read(s, "sounds/snare.aif");
-    ~p3_hatsBuffer = Buffer.read(s, "sounds/hhc4.aif");
+    ~p3_buffers = Dictionary.new;
+    ~p3_buffers.add(\guitar -> "/Users/arthurc/Documents/programming/computerMusic/bstore/audio/guitarD/*.aif".pathMatch.collect {|file| Buffer.read(s, file)});
+    ~p3_buffers.add(\kick   -> Buffer.read(s, "sounds/kick.aif"));
+    ~p3_buffers.add(\snare  -> Buffer.read(s, "sounds/snare.aif"));
+    ~p3_buffers.add(\hats   -> Buffer.read(s, "sounds/hhc4.aif"));
     
     "Buffers loaded".postln;
 };
@@ -804,3 +805,92 @@
 // TODO Root note changes.
 // TODO Guitar phrases of different no.
 // TODO Mixing 
+
+~p3_drumWildKickPats = List[];
+~p3_drumWildKickPats.add([1, 0, 0, 0, 0, 0, 0, 0]);
+
+~p3_drumWildSnarePats = List[];
+~p3_drumWildSnarePats.add([0, 0, 0, 0, 1, 0, 0, 0]);
+
+~p3_drumWildHatsPats = List[];
+~p3_drumWildHatsPats.add([0]);
+
+
+~p3_drumWildPats = Dictionary();
+~p3_drumWildPats.add(\kick -> ~p3_drumWildKickPats.choose);
+~p3_drumWildPats.add(\snare -> ~p3_drumWildSnarePats.choose);
+
+
+\kick
+Tdef(\drumwild, {
+    inf.do {|i|
+
+        ~p3_drumWildPats.keysValuesDo { |key, value|
+            var item = value.wrapAt(i);
+        
+            if(item > 0 && (1/item).coin) {
+                Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[key], \pan, 0, \amp, ~p3_amps[\drums] * ~p3_amps[(\drum_ ++ key).asSymbol], \out, ~p3_drumVerbBus]);
+            };
+        };
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        0.5.wait;
+    }
+});
+
+Tdef(\drumwild).play(~p3_clock, quant:Quant(4));
+
+~p3_drumRoutine = Routine {
+    inf.do {|i|
+        var index = i%16;
+        var mult = 1;
+        var kickWrap, snareWrap, hatsWrap;
+        kickWrap = ~p3_kickPat.wrapAt(i);
+        snareWrap = ~p3_snarePat.wrapAt(i);
+        hatsWrap = ~p3_hatsPat.wrapAt(i);
+        if(~p3_kickOn) {
+            if(kickWrap == 1) {
+                Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\kick], \pan, 0, \amp, ~p3_amps[\drums] * ~p3_amps[\drum_kick], \out, ~p3_drumVerbBus]);
+            };
+        };
+        if(~p3_snareOn) {
+            if(snareWrap == 1) {
+                Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\snare], \pan, 0, \amp, ~p3_amps[\drums] * ~p3_amps[\drum_snare], \out, ~p3_drumVerbBus]);
+            } {
+                if(snareWrap > 1 && (1 / snareWrap).coin) {
+                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\snare], \pan, 0, \amp, ~p3_amps[\drums] * ~p3_amps[\drum_snare], \out, ~p3_drumVerbBus]);
+                
+                };
+            };
+        };
+        if(~p3_hatsOn) {
+            if(hatsWrap == 1) {
+                Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\hats], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus]);
+            } {
+                if(hatsWrap > 1 && (1 / hatsWrap).coin) {
+                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\hats], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus]);
+                };
+            
+                if(~p3_hatsPat === ~p3_hatsPats[\main] && (hatsWrap == 2)) {
+                    ~p3_double.({Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\hats], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus])}, 2, 2);
+                };
+            };
+        };
+        0.5.wait;
+    };
+};
