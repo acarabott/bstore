@@ -223,7 +223,7 @@
                     };
                 
                     if(~p3_hatsPat === ~p3_hatsPats[\main] && (hatsWrap == 2)) {
-                        ~p3_double.({Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\hats], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus])}, 2, 2);
+                        ~p3_double.({|i| Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\hats], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus])}, 2, 2);
                     };
                 };
             };
@@ -399,7 +399,7 @@
                   // "rate: ".post; (rate).postln;
                   // "amp: ".post; (amp).postln;
               };
-              ~p3_double.(~p3_guitarNote.(rate, amp), mult, mult, wait);
+              ~p3_double.({|i| ~p3_guitarNote.(rate, amp)}, mult, mult, wait);
 
           };
 
@@ -544,6 +544,8 @@
     ~p3_guitarMelodyCount = 0;
     
     ~p3_guitarInteractiveActivityLevel = 0.3;
+    
+    ~p3_drumWildRateMoves = false;
     "Variables initialised".postln;
 };
 
@@ -693,7 +695,7 @@
     ~p3_double = {|func, mult=2, div=2, wait=0.5|
         {
             mult.do { |i|
-                func.();
+                func.(i);
                 (wait / div).wait;
             };
         }.fork(~p3_clock)
@@ -805,46 +807,96 @@
 // TODO Root note changes.
 // TODO Guitar phrases of different no.
 // TODO Mixing 
+// TODO Have scale controls for activity levels.
 
 ~p3_drumWildKickPats = List[];
 ~p3_drumWildKickPats.add([1, 0, 0, 0, 0, 0, 0, 0]);
+~p3_drumWildKickPats.add([1, 0, 0,  1, 0, 0,    1, 1, 0,    1, 1, 0,    1, 0, 0, 0]);
+~p3_drumWildKickPats.add([0]);
+
 
 ~p3_drumWildSnarePats = List[];
 ~p3_drumWildSnarePats.add([0, 0, 0, 0, 1, 0, 0, 0]);
+~p3_drumWildSnarePats.add([0, 0, 5, 0,      1, 0, 0, 0,     0, 0, 5, 0,     1, 0, 0, 0]);
+~p3_drumWildSnarePats.add([0]);
 
 ~p3_drumWildHatsPats = List[];
 ~p3_drumWildHatsPats.add([0]);
-
+~p3_drumWildHatsPats.add([1, 0]);
+~p3_drumWildHatsPats.add([1, 0, 0]);
 
 ~p3_drumWildPats = Dictionary();
-~p3_drumWildPats.add(\kick -> ~p3_drumWildKickPats.choose);
-~p3_drumWildPats.add(\snare -> ~p3_drumWildSnarePats.choose);
+~p3_drumWildPats.add(\kick -> ~p3_drumWildKickPats.choose); ~p3_drumWildPats[\kick].postln;
+~p3_drumWildPats.add(\snare -> ~p3_drumWildSnarePats.choose); ~p3_drumWildPats[\snare].postln;
+~p3_drumWildPats.add(\hats -> ~p3_drumWildHatsPats.choose); ~p3_drumWildPats[\hats].postln;
+~p3_drumWildPats.add(\all -> []);
 
 
-\kick
+~p3_buffers.collect({ |item, i| 
+    if(item.key == \kick) {
+        true
+    };
+})
+
+~p3_drumWildRateMoves = true;
+(
 Tdef(\drumwild, {
+    // TODO Reactive panning on this
+    // TODO Divide up activity levels based on quarters. One for rate other for madness
+    var rateSig = Env.new([1, 2, 1, 0.05], [1,0.5, 1]).asSignal(100);
+    var drumBufs = [~p3_buffers[\kick], ~p3_buffers[\snare], ~p3_buffers[\hats]];
+    var multArray = [1, 2, 3, 4, 6, 8, 12, 16, 32];
     inf.do {|i|
 
         ~p3_drumWildPats.keysValuesDo { |key, value|
-            var item = value.wrapAt(i);
+            var item, rate, rateFunc, mult, div;
+            rate = rateSig[~p3_y.linlin(0, 1, 0, rateSig.size-1).floor];
+            if(key != \all) {
+                item = value.wrapAt(i);
         
-            if(item > 0 && (1/item).coin) {
-                Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[key], \pan, 0, \amp, ~p3_amps[\drums] * ~p3_amps[(\drum_ ++ key).asSymbol], \out, ~p3_drumVerbBus]);
+        
+                if(item > 0 && (1/item).coin) {
+                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[key], \pan, 0, \amp, ~p3_amps[\drums] * ~p3_amps[(\drum_ ++ key).asSymbol], \rate, rate, \out, ~p3_drumVerbBus]);
+                };
+            } {
+                if(~p3_x.max(0.3).coin) {
+                    item = drumBufs.choose;
+                    
+                    if(~p3_x > 0.5 && (0.5.coin)) {
+                        mult = ~p3_x.linlin(0.5, 1, 0, multArray.size).floor;
+                        if(0.25.coin) {
+                            div = [2, 4].choose;
+                        } {
+                            div = 1;
+                        };
+                        
+                        div = div * mult;
+                    } {
+                        mult = 1;
+                        div = 1;
+                    };
+                    
+                    if(~p3_drumWildRateMoves && mult > 1) {
+                        if(0.5.coin) {
+                            rateFunc = {|ri| rate - (ri/10)};
+                        } {
+                            rateFunc = {|ri| rate + (ri/10)};
+                        };
+                        
+                    } {
+                        rateFunc = {|ri| rate};
+                    };
+                    ~p3_double.(
+                        {|di|
+                            Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, item, \pan, [~p3_x, ~p3_y].choose, \amp, ~p3_amps[\drums] * ~p3_amps[(\drum_ ++ ~p3_buffers.findKeyForValue(item)).asSymbol], \rate, rateFunc.(di), \out, ~p3_drumVerbBus])
+                        },
+                        mult,
+                        div,
+                        0.5
+                    );
+                };
             };
         };
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         
         
         
@@ -852,7 +904,9 @@ Tdef(\drumwild, {
         0.5.wait;
     }
 });
+)
 
+~p3_buffers.findKeyForValue([~p3_buffers[\kick], ~p3_buffers[\snare], ~p3_buffers[\hats]].choose)
 Tdef(\drumwild).play(~p3_clock, quant:Quant(4));
 
 ~p3_drumRoutine = Routine {
@@ -887,10 +941,13 @@ Tdef(\drumwild).play(~p3_clock, quant:Quant(4));
                 };
             
                 if(~p3_hatsPat === ~p3_hatsPats[\main] && (hatsWrap == 2)) {
-                    ~p3_double.({Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\hats], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus])}, 2, 2);
+                    ~p3_double.({|i| Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\hats], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus])}, 2, 2);
                 };
             };
         };
         0.5.wait;
     };
 };
+// TODO NOW LOOK INTO FUCKING 300 SYNTHS. possibly played with no buffer
+
+
