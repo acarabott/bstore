@@ -120,6 +120,8 @@
     ~p3_bassNote = ~p3_root;
     
     // Drum section?
+    // TODO Change bass note back when stopping
+    // ~p3_bassNote = 50;
     // Guitar interactive
     ~p3_interactiveGuitar.play(~p3_clock, Quant(4));
     // ~p3_sliders[]
@@ -836,40 +838,58 @@
 
 ~p3_drumWildRateMoves = false;
 
-(
+~ma = [2, 3, 4, 6, 8, 12, 16];
 
+~ma[0..~p3_x.linlin(0.25, 1, 0, ~ma.size).floor.asInteger];
+~ma[0..1]
+(
+~p3_bassNote = 57;
 Tdef(\drumwild, {
     // TODO Reactive panning on this
     // TODO Divide up activity levels based on quarters. One for rate other for madness
     var rateSig = Env.new([1, 2, 1, 0.05], [1,0.5, 1]).asSignal(100);
     var drumBufs = [~p3_buffers[\kick], ~p3_buffers[\snare], ~p3_buffers[\hats]];
-    var multArray = [1, 2, 3, 4, 6, 8, 12, 16];
+    var multArray = [2, 3, 4, 6, 8, 12, 16];
     var playNext = true;
     var doubleWait = 0.5;
-    // var multArray = [3];
+    var subMultArray;
     
     inf.do {|i|
+        
+        if(i%32 == 0) {
+            if(~p3_bassNote == 57) {
+                ~p3_bassNote = 58;
+            } {
+                ~p3_bassNote = 57;
+            };
+        };
+        
         ~p3_drumWildPats.keysValuesDo { |key, value|
             var item, rate, rateFunc, mult, div;
-            rate = rateSig[~p3_y.linlin(0, 1, 0, rateSig.size-1).floor];
+            rate = rateSig[~p3_y.linlin(0, 1, 0, rateSig.size-1).floor.asInteger];
             if(key != \all) {
+                if(~p3_drumWildPats[\all]) {
+                    rate = 1;
+                };
+                
                 item = value.wrapAt(i);
         
-                if(~debug) {
-                    // "item: ".post; (item).postln;
-                };
                 if(item > 0 && (1/item).coin) {
                     Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[key], \pan, 0, \amp, ~p3_amps[\drums] * ~p3_amps[(\drum_ ++ key).asSymbol], \rate, rate, \out, ~p3_drumVerbBus, \dur, 0.25, \tail, 0.25]);
                 };
             } {
+                
+                
                 if(value) {
                     if(playNext) {
-                        if(~p3_x.max(0.5).coin) {
+                        if(~p3_x.max(0.2).coin) {
                             item = drumBufs.choose;
                     
-                            if(~p3_x > 0.5 && (1.coin)) {
-                                mult = multArray[~p3_x.linlin(0.5, 1, 0, multArray.size).floor];
-                                if(0.25.coin) {
+                            if(~p3_x.linlin(0, 1, 0.2, 0.8).coin) {
+                            // if(~p3_x > 0.5 && (0.5.coin)) {
+                                subMultArray = multArray[0..~p3_x.linlin(0.25, 1, 0, multArray.size).floor.asInteger];
+                                mult = subMultArray.wchoose(Array.series(subMultArray.size, 10, -2).normalizeSum);
+                                if(0.1.coin) {
                                     div = [2, 4].choose;
                                 } {
                                     div = 1;
@@ -884,15 +904,23 @@ Tdef(\drumwild, {
                             if(mult > 1) {
                                 if(~p3_drumWildRateMoves && (mult > 1)) {
                                     if(0.5.coin) {
-                                        rateFunc = {|ri| rate - (ri/10)};
+                                        rateFunc = {|ri| 
+                                            // "(ri/10): ".post; ((ri/10)).postln;
+                                            // "rate: ".post; (rate).postln;                                                                                 
+                                            // "ri: ".post; (ri/10).postln;
+                                            (rate - (ri/(1..10).choose));
+                                        }
                                     } {
-                                        rateFunc = {|ri| rate + (ri/10)};
+                                        // rateFunc = {|ri| "ri: ".post; (ri).postln};
+                                        rateFunc = {|ri| (rate + (ri/(1..10).choose))};
+                                        // rateFunc = {|ri| rate};
+                                        
                                     };
                                 } {
                                     rateFunc = {|ri| rate};
                                 };
                         
-                                if(0.coin) {
+                                if(0.15.coin) {
                                     playNext = false;
                                     doubleWait = 1;
                                 };
@@ -902,12 +930,13 @@ Tdef(\drumwild, {
                             };
                     
                             if(~debug) {
-                                "item: ".post; (item).postln;
-                                "mult: ".post; (mult).postln;
-                                "div: ".post; (div).postln;
-                                "doubleWait: ".post; (doubleWait).postln;
-                                "rate: ".post; (rate).postln;
-                                "rateFunc: ".post; (rateFunc.()).postln;
+                                // "item: ".post; (item).postln;
+                                // "mult: ".post; (mult).postln;
+                                // "div: ".post; (div).postln;
+                                // "doubleWait: ".post; (doubleWait).postln;
+                                // "rate: ".post; (rate).postln;
+                                // "rateFunc: ".post; (rateFunc.()).postln;
+                                // " ".postln;
                             };
                     
                     
@@ -935,6 +964,8 @@ Tdef(\drumwild, {
 });
 )
 
+~p3_drumWildRateMoves
+// TODO Too bias towards mega fast, need to have slower
 Tdef(\drumwild).play(~p3_clock, quant:Quant(4));
 Tdef(\drumwild).stop
 ~p3_drumVerb.set(\room, ~p3_drumRoomInit);
