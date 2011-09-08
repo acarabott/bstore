@@ -122,14 +122,17 @@
     // Drum section?
     // TODO Change bass note back when stopping
     // ~p3_bassNote = 50;
+    // TODO don't stop drums, just move to low grade
     // Guitar interactive
     ~p3_interactiveGuitar.play(~p3_clock, Quant(4));
-    // ~p3_sliders[]
+
+    // TODO guitar volume down to 0 (better if guitar notes just stop)
+    // TODO VARsaw continues, drums become more hectic
     // TODO Automate varsaw and guitar levels here. should this change GUI values? no
     // TODO varsaw can change to % 16
+    // TODO Drums fade out and stop, bass fades out, guitar comes up to about 0.15-0.2
+    // TODO varsaw fades out
     
-    // Needs to be at least 
-    // Drums On beat
 };
 );
 (
@@ -482,6 +485,7 @@
         "Server Booted".postln;        
     };
 };
+
 ~p3_variables = {
     ~p3_clock = TempoClock(160/60);
     ~p3_amps = Dictionary.new;
@@ -816,16 +820,19 @@
 ~p3_drumWildKickPats = List[];
 ~p3_drumWildKickPats.add([1, 0, 0, 0, 0, 0, 0, 0]);
 ~p3_drumWildKickPats.add([1, 0, 0,  1, 0, 0,    1, 1, 0,    1, 1, 0,    1, 0, 0, 0]);
+~p3_drumWildKickPats.add([1, 0, 0, 0]);
 ~p3_drumWildKickPats.add([0]);
 
 
 ~p3_drumWildSnarePats = List[];
 ~p3_drumWildSnarePats.add([0, 0, 0, 0, 1, 0, 0, 0]);
 ~p3_drumWildSnarePats.add([0, 0, 5, 0,      1, 0, 0, 0,     0, 0, 5, 0,     1, 0, 0, 0]);
+~p3_drumWildSnarePats.add([0, 0, 5, 0,      1, 0, 0, 0,     10, 10, 5, 10,     1, 10, 10, 10]);
 ~p3_drumWildSnarePats.add([0]);
 
 ~p3_drumWildHatsPats = List[];
 ~p3_drumWildHatsPats.add([0]);
+~p3_drumWildHatsPats.add([0, 0, 1, 0]);
 ~p3_drumWildHatsPats.add([1, 0]);
 ~p3_drumWildHatsPats.add([1, 0, 0]);
 
@@ -833,15 +840,132 @@
 ~p3_drumWildPats.add(\kick -> ~p3_drumWildKickPats.choose); ~p3_drumWildPats[\kick].postln;
 ~p3_drumWildPats.add(\snare -> ~p3_drumWildSnarePats.choose); ~p3_drumWildPats[\snare].postln;
 ~p3_drumWildPats.add(\hats -> ~p3_drumWildHatsPats.choose); ~p3_drumWildPats[\hats].postln;
-~p3_drumWildPats.add(\all -> true);
+~p3_drumWildPats.add(\all -> false);
 
 
+~p3_drumWildPlayNext = 0.15;
+~p3_drumWildPlayNoteMin = 0.4;
+~p3_drumWildMultMin = 0.2;
+~p3_drumWildMultMax = 0.8;
 ~p3_drumWildRateMoves = false;
 
-~ma = [2, 3, 4, 6, 8, 12, 16];
+Tdef(\drumWildControl, {
+    ~p3_drumWildPats.add(\kick  -> ~p3_drumWildKickPats[0]);
+    ~p3_drumWildPats.add(\snare -> ~p3_drumWildSnarePats[0]); 
+    ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[0]);
+    
+    Tdef(\drumwild).play(~p3_clock, quant:Quant(4));
+    
+    if(~debug) {
+        10.wait;
+    } {
+        60.wait;        
+    };
+    
+    ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[1]);
+    if(~debug) {
+        5.wait;
+    } {
+        30.wait;        
+    };
+    
+    ~p3_drumWildPats.add(\kick  -> ~p3_drumWildKickPats[1]);
 
-~ma[0..~p3_x.linlin(0.25, 1, 0, ~ma.size).floor.asInteger];
-~ma[0..1]
+    if(~debug) {
+        5.wait;
+    } {
+        30.wait;        
+    };
+    ~p3_drumWildPats.add(\snare -> ~p3_drumWildSnarePats[1]); 
+    if(~debug) {
+        5.wait;
+    } {
+        30.wait;        
+    };
+    ~p3_drumWildPats.add(\snare -> ~p3_drumWildSnarePats[2]); 
+
+    ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[2]);
+    4.do { |i|
+        if(~debug) {
+            5.wait;
+        } {
+            30.wait;        
+        };
+        ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[3]);
+        if(~debug) {
+            5.wait;
+        } {
+            30.wait;        
+        };
+        ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[2]);
+    };
+    
+    ~p3_drumWildPats.add(\snare -> ~p3_drumWildSnarePats[3]);     
+    ~p3_drumWildPats.add(\kick  -> ~p3_drumWildKickPats[2]);
+    ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[0]);
+    ~p3_drumWildPats.add(\all -> true);
+
+    if(~debug) {
+        5.wait;
+    } {
+        60.wait;        
+    };
+    
+    ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[1]);
+    
+    if(~debug) {
+        5.wait;
+    } {
+        30.wait;        
+    };
+    
+    ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[2]);
+    ~p3_drumWildPlayNext = 0;
+    ~p3_drumWildPlayNoteMin = 0.7;
+    if(~debug) {
+        5.wait;
+    } {
+        30.wait;        
+    };
+   
+    4.do { |i|
+        if(~debug) {
+            5.wait;
+        } {
+            [5,15].choose.wait;        
+        };
+        ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[3]);
+        if(~debug) {
+            5.wait;
+        } {
+            [5,15].choose.wait;        
+        };
+        ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[2]);
+    };
+    ~p3_drumWildPlayNoteMin = 1;
+    ~p3_drumWildRateMoves = true;
+    ~p3_drumWildMultMin = 0.5;
+    
+    if(~debug) {
+        5.wait;
+    } {
+        30.wait;        
+    };
+    
+    ~p3_drumWildPats.add(\kick  -> ~p3_drumWildKickPats[0]);
+    ~p3_drumWildPats.add(\snare -> ~p3_drumWildSnarePats[0]); 
+    
+    if(~debug) {
+        5.wait;
+    } {
+        30.wait;        
+    };
+    
+    ~p3_drumWildMultMin = 1;
+    ~p3_drumWildMultMax = 1;
+    ~p3_drumWildPlayNext = 1;
+    
+}).play;
 (
 ~p3_bassNote = 57;
 Tdef(\drumwild, {
@@ -878,24 +1002,25 @@ Tdef(\drumwild, {
                     Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[key], \pan, 0, \amp, ~p3_amps[\drums] * ~p3_amps[(\drum_ ++ key).asSymbol], \rate, rate, \out, ~p3_drumVerbBus, \dur, 0.25, \tail, 0.25]);
                 };
             } {
-                
-                
                 if(value) {
                     if(playNext) {
-                        if(~p3_x.max(0.2).coin) {
-                            item = drumBufs.choose;
+                        if(~p3_x.max(~p3_drumWildPlayNoteMin).coin) {
+                            item = drumBufs.wchoose([1, 2, 4].normalizeSum);
                     
-                            if(~p3_x.linlin(0, 1, 0.2, 0.8).coin) {
+                            if(~p3_x.linlin(0, 1, ~p3_drumWildMultMin, ~p3_drumWildMultMax).coin) {
                             // if(~p3_x > 0.5 && (0.5.coin)) {
                                 subMultArray = multArray[0..~p3_x.linlin(0.25, 1, 0, multArray.size).floor.asInteger];
                                 mult = subMultArray.wchoose(Array.series(subMultArray.size, 10, -2).normalizeSum);
-                                if(0.1.coin) {
-                                    div = [2, 4].choose;
+                                if(0.25.coin) {
+                                    div = [2, 4, 8].wchoose([2,2,1].normalizeSum);
                                 } {
                                     div = 1;
                                 };
-                        
-                                div = div * mult;
+                                
+                                // TODO this can increase as time goes on
+                                if(0.25.coin) {
+                                    div = div * mult;
+                                };
                             } {
                                 mult = 1;
                                 div = 1;
@@ -920,7 +1045,7 @@ Tdef(\drumwild, {
                                     rateFunc = {|ri| rate};
                                 };
                         
-                                if(0.15.coin) {
+                                if(~p3_drumWildPlayNext.coin) {
                                     playNext = false;
                                     doubleWait = 1;
                                 };
@@ -966,7 +1091,12 @@ Tdef(\drumwild, {
 
 ~p3_drumWildRateMoves
 // TODO Too bias towards mega fast, need to have slower
-Tdef(\drumwild).play(~p3_clock, quant:Quant(4));
+{
+    ~p3_drumRoutine.stop;
+    Tdef(\drumwild).play(~p3_clock, quant:Quant(4));
+}.fork(~p3_clock, quant:Quant(4));
+
+
 Tdef(\drumwild).stop
 ~p3_drumVerb.set(\room, ~p3_drumRoomInit);
 ~p3_drumVerb.set(\mix, 0.5);
