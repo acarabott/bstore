@@ -127,6 +127,7 @@
         ~p3_drumWildControl.play;
     }.fork(~p3_clock, quant:Quant(4));
     
+    ~p3_controlCondition.wait;
     // Drum section?
     // TODO Change bass note back when stopping
     // ~p3_bassNote = 50;
@@ -744,6 +745,9 @@
         ~p3_drumWildPats.add(\snare -> ~p3_drumWildSnarePats[0]); 
         ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[0]);
         
+        ~p3_controlCondition.test = true;
+        ~p3_controlCondition.signal;
+        
     };
 };
 );
@@ -758,6 +762,7 @@
 
 ~p3_variables = {
     ~p3_clock = TempoClock(160/60);
+    ~p3_controlCondition = Condition.new(false);
     ~p3_amps = Dictionary.new;
     ~p3_amps.add(\bass -> 1);
     ~p3_amps.add(\guitar -> 1);
