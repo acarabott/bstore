@@ -23,7 +23,7 @@
 (
 ~p3_stop = {
     ~p3_mouseResponder.remove;
-    [~p3_control, ~p3_drumBuild, ~p3_bassline_1, ~p3_drumRoutine, ~p3_guitarStart, ~p3_guitarMelody, ~p3_interactiveGuitar, ~p3_drumVerbRoutine, ~p3_guitarVerbRoutine, ~p3_varsawVerbRoutine].do { |item, i|
+    [~p3_control, ~p3_drumBuild, ~p3_bassline, ~p3_drumRoutine, ~p3_guitarStart, ~p3_guitarMelody, ~p3_interactiveGuitar, ~p3_drumVerbRoutine, ~p3_guitarVerbRoutine, ~p3_varsawVerbRoutine].do { |item, i|
         item.stop;
     };
 };
@@ -43,7 +43,7 @@
 (
 ~p3_control = Routine {
     "Bass start".postln;
-    ~p3_bassline_1.play(~p3_clock, Quant(4));
+    ~p3_bassline.play(~p3_clock, Quant(4));
     if(~debug) {
         1.wait;
     } {
@@ -169,16 +169,17 @@
         // ~p3_guitarVerbRoutine.play;
         // ~p3_varsawVerbRoutine.play;
     };
-    ~p3_bassline_1.play(~p3_clock, Quant(4));
-    ~p3_bassline_1.stop
-    ~p3_bassline_1 = Routine {
+
+    ~p3_bassline = Routine {
         var next = true;
     
         inf.do{ |i|
             var amp;
             var note;
             var rand;
-        
+            var leftAct, rightAct;
+            var xpos;
+            
             if(i%4 == 0) {
                 amp = 0.2;
             } {
@@ -187,22 +188,25 @@
         
             note = ~p3_bassNote;
             if(~p3_bassMove) {
-                // if(~p3_y <= 0.5 && next) {
-                if(~p3_y <= 0.5) {
-                    
+                leftAct = (~data[0] + ~data[2]) / 2;
+                rightAct = (~data[1] + ~data[3]) / 2;
+            
+                if(leftAct >= ~p3_bassThresh || (rightAct >= ~p3_bassThresh)) {  
                     note = [~p3_bassNote, ~p3_bassNote-5, ~p3_bassNote+7, ~p3_bassNote-12, ~p3_bassNote+12].wchoose([5, 3, 1, 2, 1].normalizeSum);
-                    // if(0.9.coin) {
-                        // next = false;
-                    // };
-        
-                } {
-                    // if(0.1.coin) {
-                        // next = true;
-                    // };
+                    
+                    if(~p3_bassHigh.coin) {
+                        if(leftAct >= rightAct) {
+                            xpos = leftAct.neg;
+                        } {
+                            xpos = rightAct;
+                        };
+                        
+                        Synth.before(~testVerb, \BSP3_Bass, [\out, ~testBus, \freq, (note+24).midicps, \amp, 0.5, \xpos, (((~data[0]+~data[2])/2).neg + ((~data[1] + ~data[3])/2)), \ypos, ~data.mean.linlin(0, 1, 0, [1, -1].choose)]);
+                    };
                 };
             };
         
-            Synth(\BSP3_Bass, [\freq, note.midicps, \amp, amp*~p3_amps[\bass]]);        
+            Synth(\BSP3_Bass, [\freq, note.midicps, \amp, amp*~p3_amps[\bass]]);
             Synth(\BSP3_Bass, [\freq, (note-12).midicps, \amp, amp*~p3_amps[\bass]]);
         
             0.5.wait;
@@ -782,6 +786,8 @@
     ~p3_bassNote = ~p3_root;
     
     ~p3_bassMove = false;
+    ~p3_bassHigh = 0;
+    ~p3_bassThresh = 0.5;
     
     ~p3_kickOn      = false;
     ~p3_snareOn     = false;
@@ -801,6 +807,7 @@
     ~p3_drumRoomInit = 0.2;
     ~p3_guitarRoomInit = 0.8;
     ~p3_varsawRoomInit = 1;
+    ~p3_bassRoomInit = 0.8;
     
     ~p3_guitarRetrig = 0.3;
     ~p3_guitarResolved = false;
@@ -868,25 +875,24 @@
 };
 
 ~p3_loadsynthdefs = {
-    SynthDef(\BSP3_Bass) { |out=0, freq=110, amp=1|
+    SynthDef(\BSP3_Bass) { |out=0, freq=110, amp=1, xpos=0, ypos=0|
         var saw = LFSaw.ar(freq, 0, amp/6);
         var sin = SinOsc.ar(freq, 0, amp);
         var env = Env.perc(0.01, 0.5, 1);
         var envgen = EnvGen.ar(env, doneAction: 2);
         var sig = Mix.ar([saw, sin]);
         Out.ar(out,
-            (sig*envgen).dup
+            Pan4.ar(sig*envgen, xpos, ypos);
         );
-    
+
     }.add;
 
-    SynthDef(\BSP3_Sampler) { |out=0, buf=0, amp=0.5, pan=0, rate=1, dur=8, tail=1|
+    SynthDef(\BSP3_Sampler) { |out=0, buf=0, amp=0.5, pan=0, rate=1, dur=8, tail=1, xpos=0, ypos=0|
         var sig = PlayBuf.ar(1, buf, BufRateScale.kr(buf)*rate, doneAction: 2)*amp;
         var env = EnvGen.ar(Env.new([1,1,0], [dur, tail]), doneAction: 2);
         
         Out.ar(out,
-            // TODO Pan4
-            Pan2.ar(sig*env, pan);
+            Pan4.ar(sig*env, xpos, ypos)
         );
     }.add;
 
@@ -899,17 +905,26 @@
     }.add;
 
     SynthDef(\BSP3_Reverb) { |in=0, out=0, mix=0.5, room=0.8, damp=0.4|
-        var sig = In.ar(in, 2);
-        var verb = FreeVerb2.ar(sig[0], sig[1], mix, room, damp);
-    
+        var sig = In.ar(in, 4);
+        var verbFront   = FreeVerb2.ar(sig[0], sig[1], mix, room, damp);
+        var verbBack    = FreeVerb2.ar(sig[2], sig[3], mix, room, damp);
+        var verbLeft    = FreeVerb2.ar(sig[0], sig[2], mix, room, damp);
+        var verbRight   = FreeVerb2.ar(sig[1], sig[3], mix, room, damp);
+
+
         Out.ar(out,
-            Mix.ar([sig, verb])
+            [
+                Mix.ar([sig[0], verbFront[0]/2, verbLeft[0]/2]), 
+                Mix.ar([sig[1], verbFront[1]/2, verbRight[0]/2]), 
+                Mix.ar([sig[2], verbBack[0]/2, verbLeft[1]/2]),
+                Mix.ar([sig[3], verbBack[1]/2, verbRight[1]/2])
+            ]
         );
     }.add;    
     
     // TODO Make rate and fgain interactive
     // TODO replace mousey with interactive
-    SynthDef(\BSP3_VarSaw) { |out=0, freq=440, amp=0.25, pan=0, att=0.2, sus=0.75, rel=1, rate=0.5, fgain=2|
+    SynthDef(\BSP3_VarSaw) { |out=0, freq=440, amp=0.25, pan=0, att=0.2, sus=0.75, rel=1, rate=0.5, fgain=2, xpos=0, ypos=0|
         var sig = Mix.new(VarSaw.ar(freq * [0.5,1,2], 0, LFNoise1.kr(0.3,0.1,0.1), 0.1));
         var line = Line.kr(8000, 1000, 1);
         var lpf = LPF.ar(sig, line);
@@ -917,12 +932,9 @@
         var env = EnvGen.ar(Env.linen(att, sus, rel, amp, 'sine'), doneAction: 2);
         var madmoog = MoogFF.ar(lpf, line, MouseY.kr(4, 0)).range(-0.1, 0.1);
         var final = Mix.ar([moog, madmoog]);
-        // madmoog = madmoog / max(0.1, Amplitude.ar(madmoog, 0, 0.1).min(0.1));
         
         Out.ar(out,
-            // TODO Pan4
-            Pan2.ar(final * env, 0);
-            
+            Pan4.ar(final * env, xpos, ypos)
         );
     }.add;
     
@@ -931,9 +943,10 @@
 
 ~p3_busses = {
     // TODO Will need to have 4 channel busses and two reverbs per bus
-    ~p3_drumVerbBus = Bus.audio(s, 2);
-    ~p3_guitarVerbBus = Bus.audio(s, 2);
-    ~p3_varsawVerbBus = Bus.audio(s, 2);
+    ~p3_drumVerbBus = Bus.audio(s, 4);
+    ~p3_guitarVerbBus = Bus.audio(s, 4);
+    ~p3_varsawVerbBus = Bus.audio(s, 4);
+    ~p3_bassVerbBus = Bus.audio(s, 4);
     "Busses initialised".postln;
 };
 
@@ -1111,6 +1124,8 @@
     ~p3_drumVerb = Synth(\BSP3_Reverb, [\in, ~p3_drumVerbBus, \damp, 0.4, \mix, 0.8, \room, ~p3_drumRoomInit]);
     ~p3_guitarVerb = Synth(\BSP3_Reverb, [\in, ~p3_guitarVerbBus, \damp, 0.4, \mix, 0.8, \room, ~p3_guitarRoomInit]);
     ~p3_varsawVerb = Synth(\BSP3_Reverb, [\in, ~p3_varsawVerbBus, \damp, 0.1, \mix, 1, \room, ~p3_varsawRoomInit]);
+    ~p3_bassVerb = Synth(\BSP3_Reverb, [\in, ~p3_bassVerbBus, \damp, 0.1, \mix, 0.8, \room, ~p3_bassRoomInit]);
+
     "Synths started".postln;
 };
 )
