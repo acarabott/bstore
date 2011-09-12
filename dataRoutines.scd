@@ -1,3 +1,21 @@
+n = NetAddr("127.0.0.1", 57120);
+o = OSCresponderNode(n, '/activity', {|t, r, msg| }).add;
+o.action_({|t, r, msg|
+    var data = msg[1..4];
+    ~p3_left = (data[0] + data[2]) / 2;
+    ~p3_right = (data[1] + data[3]) / 2;
+    ~p3_top = data[0..1].mean;
+    ~p3_bottom = data[2..3].mean;
+    
+    if(~drumReverbChanging) {
+        ~drumReverbFunc.(data);
+    };
+    
+    if(~drumActivityChanging) {
+        ~drumActivityFunc.(data);
+    };
+});
+
 c = Condition(false);
 r = Routine {
     var dirs = true!4;
@@ -31,15 +49,16 @@ r = Routine {
             ~wv[i].bounds = Rect(itemBounds.left, top + 200 - item, 200, item);
         };
         
-        
+        n.sendMsg("/activity", ~data[0], ~data[1], ~data[2], ~data[3]);
         ~rate.wait;
     }
 };
-~data = [1,0,1,0];
+
+~data = [0,1,0,1];
 w = Window("activity levels", Rect(100, 100, 400, 400)).front;
 ~wv = [[0,0], [200, 0], [0, 200], [200, 200]].collect({ |item, i| 
     CompositeView.new(w, Rect(item[0], item[1], 200, 0)).background_(Color.rand)
-})
+});
 r.play(AppClock);
 r.stop
 ~rate = 0.001.max(0.000001);
@@ -47,60 +66,81 @@ c.test = false; c.signal;
 c.test = true; c.signal;
 ]
 
-~data = [1,0,1,0]
+~data = [1,0.9,1,0.9];
+~data = [0,0,0,0]; n.sendMsg("/activity", ~data[0], ~data[1], ~data[2], ~data[3]);
 
-~p3_bassline.play(~p3_clock, Quant(4));
-~p3_bassline.stop
-~p3_bassHigh = 0;
-~p3_bassThresh = 1;
-~p3_bassMove = false;
+~drumActivityChanging = true;
+~drumReverbChanging = false;
+~drumReverbFunc = {|data|
+    var max = data.maxItem;
+    ~p3_drumVerb.set(\room, max.linlin(0, 0.8, 0, 0.9));
+    ~p3_amps[\drums] = max.linlin(0, 1, 0.4, 1);
+        
+};
 
-Synth.before(~p3_bassVerb, \BSP3_Bass, [\out, ~p3_bassVerbBus, \freq, (45).midicps, \amp, 0.4*~p3_amps[\bass], \xpos, -1, \ypos, 0]);
+~drumActivityFunc = {|data|
+    var min, val;
+    
+    min = ~p3_left.min(~p3_right);
+    if(min < 0.5) {
+        val = ~p3_left.max(~p3_right).linlin(0, 1, 10, 1).floor;
+    } {
+        val = (~p3_left + ~p3_right).linlin(0, 2, 10, 1).floor;
+    };
+    
+    ~p3_snarePat = ~p3_snarePats[\active].collect({ |item, i| 
+        if(item == 1) {
+            item
+        } {
+            item + val;
+        };
+    });
+    ~p3_hatsPat = ~p3_hatsPats[\main].collect({ |item, i| 
+        if(item == 1) {
+            item
+        } {
+            item + val;
+        };
+    });
+    // ~p3_snarePat    = ~p3_snarePats[\active] + val;
+};
 
-
-~testBus = Bus.audio(s, 4);
-
-~testVerb = Synth(\BSP3_Reverb, [\in, ~testBus, \damp, 1, \mix, 0.1, \room, 0.2]);
-~testVerb.free
-~testVerb.set(\damp, 0.1);
-~testVerb.set(\room, 0.8);
-~testVerb.set(\mix, 0.5);
-
-Synth.before(~testVerb, \BSP3_Bass, [\out, ~testBus, \freq, (74).midicps, \amp, 0.5, \xpos, (((~data[0]+~data[2])/2).neg + ((~data[1] + ~data[3])/2)), \ypos, ~data.mean.linlin(0, 1, 0, [1, -1].choose)]);
-
-~p3_bassMove = false;
-~p3_bassEnd = true;
-~p3_bassHigh = 0;
-~p3_bassThresh = 1;
-
-~p3_sectionDuration = 150;
-
-~p3_section1Control = Routine {
+~p3_section2Control = Routine {
     var start, end, index, div, inc;
     index = 0;
     start = ~p3_sectionDuration/10;
     end = ~p3_sectionDuration/5;
     div = 100;
     inc = 1/div;
-    
-    ~p3_bassline.play(~p3_clock, Quant(4));
+
     start.wait;
-    ~p3_bassMove = true;
-    "moving".postln;
-    while({index < 1}, {
-        index = index + inc;
-        ~p3_bassHigh = ~p3_bassHigh + inc;
-        ~p3_bassThresh = ~p3_bassThresh - inc;
-        
-        if(index > 0.8) {
-            ~p3_bassEnd = true;
-        };
-        
-        ((~p3_sectionDuration-start-end) / div).wait;
-    });
-    "at end".postln;
-    end.wait;
-    ~bassMove = false;
-    ~p3_bassHigh = 0;
-    ~p3_bassThresh = 1;
+    ~p3_kickOn = false;
+    ~p3_snareOn = false;
+    ~p3_hatsOn = true;
+    
+    ~drumReverbChanging = false;
+    ~drumActivityChanging = false;
+    ~p3_snarePat    = ~p3_snarePats[\main];
+    ~p3_hatsPat     = ~p3_hatsPats[\offbeat];
+    ~p3_kickPat    = ~p3_kickPats[\main];
+
+    ~p3_drumRoutine.play(~p3_clock, Quant(4));
+    
+    5.wait;
+    ~p3_kickOn = true;
+    
+    5.wait;
+    ~p3_hatsPat = ~p3_hatsPats[\main];
+    ~p3_snareOn = true;
+    
+    ~drumReverbChanging = true;
+    ~p3_drumPanMoving = true;
+    5.wait;
+    
+    ~drumActivityChanging = true;
+    ~p3_snarePat = ~p3_snarePats[\active];
+    ~p3_snarePats[\active];
+    // Slowly drift panning backwards and forwards?
 };
+
+
