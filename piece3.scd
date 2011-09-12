@@ -172,7 +172,11 @@
 
     ~p3_bassline = Routine {
         var next = true;
-    
+        var firstNotes = [~p3_bassNote, ~p3_bassNote-5, ~p3_bassNote+7, ~p3_bassNote-12, ~p3_bassNote+12];
+        var firstWeights = [3, 3, 1, 2, 1].normalizeSum;
+        var endNotes = [~p3_bassNote, ~p3_bassNote-5, ~p3_bassNote+7, ~p3_bassNote-12, ~p3_bassNote+12, ~p3_bassNote+8, ~p3_bassNote+20, ~p3_bassNote+19, ~p3_bassNote-4, ~p3_bassNote+2, ~p3_bassNote-10];
+        var endWeights = [3, 3, 1, 2, 1, 4, 4, 4, 4, 4, 4].normalizeSum;
+        
         inf.do{ |i|
             var amp;
             var note;
@@ -192,7 +196,11 @@
                 rightAct = (~data[1] + ~data[3]) / 2;
             
                 if(leftAct >= ~p3_bassThresh || (rightAct >= ~p3_bassThresh)) {  
-                    note = [~p3_bassNote, ~p3_bassNote-5, ~p3_bassNote+7, ~p3_bassNote-12, ~p3_bassNote+12].wchoose([5, 3, 1, 2, 1].normalizeSum);
+                    if(~p3_bassEnd.not) {
+                        note = firstNotes.wchoose(firstWeights);
+                    } {
+                        note = endNotes.wchoose(endWeights);
+                    };
                     
                     if(~p3_bassHigh.coin) {
                         if(leftAct >= rightAct) {
@@ -201,7 +209,7 @@
                             xpos = rightAct;
                         };
                         
-                        Synth.before(~testVerb, \BSP3_Bass, [\out, ~testBus, \freq, (note+24).midicps, \amp, 0.5, \xpos, (((~data[0]+~data[2])/2).neg + ((~data[1] + ~data[3])/2)), \ypos, ~data.mean.linlin(0, 1, 0, [1, -1].choose)]);
+                        Synth.before(~testVerb, \BSP3_Bass, [\out, ~testBus, \freq, (note+12).midicps, \amp, amp*~p3_amps[\bass], \xpos, (((~data[0]+~data[2])/2).neg + ((~data[1] + ~data[3])/2)), \ypos, ~data.mean.linlin(0, 1, 0, [1, -1].choose)]);
                     };
                 };
             };
@@ -786,6 +794,7 @@
     ~p3_bassNote = ~p3_root;
     
     ~p3_bassMove = false;
+    ~p3_bassEnd = false;
     ~p3_bassHigh = 0;
     ~p3_bassThresh = 0.5;
     

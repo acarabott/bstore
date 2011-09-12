@@ -31,6 +31,7 @@ r = Routine {
             ~wv[i].bounds = Rect(itemBounds.left, top + 200 - item, 200, item);
         };
         
+        
         ~rate.wait;
     }
 };
@@ -46,12 +47,13 @@ c.test = false; c.signal;
 c.test = true; c.signal;
 ]
 
+~data = [1,0,1,0]
 
 ~p3_bassline.play(~p3_clock, Quant(4));
 ~p3_bassline.stop
-~p3_bassHigh = 1
-~p3_bassThresh = 0.5
-~p3_bassMove = true;
+~p3_bassHigh = 0;
+~p3_bassThresh = 1;
+~p3_bassMove = false;
 
 Synth.before(~p3_bassVerb, \BSP3_Bass, [\out, ~p3_bassVerbBus, \freq, (45).midicps, \amp, 0.4*~p3_amps[\bass], \xpos, -1, \ypos, 0]);
 
@@ -65,3 +67,40 @@ Synth.before(~p3_bassVerb, \BSP3_Bass, [\out, ~p3_bassVerbBus, \freq, (45).midic
 ~testVerb.set(\mix, 0.5);
 
 Synth.before(~testVerb, \BSP3_Bass, [\out, ~testBus, \freq, (74).midicps, \amp, 0.5, \xpos, (((~data[0]+~data[2])/2).neg + ((~data[1] + ~data[3])/2)), \ypos, ~data.mean.linlin(0, 1, 0, [1, -1].choose)]);
+
+~p3_bassMove = false;
+~p3_bassEnd = true;
+~p3_bassHigh = 0;
+~p3_bassThresh = 1;
+
+~p3_sectionDuration = 150;
+
+~p3_section1Control = Routine {
+    var start, end, index, div, inc;
+    index = 0;
+    start = ~p3_sectionDuration/10;
+    end = ~p3_sectionDuration/5;
+    div = 100;
+    inc = 1/div;
+    
+    ~p3_bassline.play(~p3_clock, Quant(4));
+    start.wait;
+    ~p3_bassMove = true;
+    "moving".postln;
+    while({index < 1}, {
+        index = index + inc;
+        ~p3_bassHigh = ~p3_bassHigh + inc;
+        ~p3_bassThresh = ~p3_bassThresh - inc;
+        
+        if(index > 0.8) {
+            ~p3_bassEnd = true;
+        };
+        
+        ((~p3_sectionDuration-start-end) / div).wait;
+    });
+    "at end".postln;
+    end.wait;
+    ~bassMove = false;
+    ~p3_bassHigh = 0;
+    ~p3_bassThresh = 1;
+};
