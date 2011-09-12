@@ -1,4 +1,5 @@
 ~debug = true;
+~debug = false;
 
 ~p3_server.();
 ~p3_loadsynthdefs.();
@@ -51,9 +52,9 @@
     "Bass Moving".postln;
     ~p3_bassMove = true;
     if(~debug) {
-        1.wait;
+        5.wait;
     } {
-        10.wait;
+        60.wait;
     };
     "Drums start".postln;
     ~p3_drumRoutine.play(~p3_clock, Quant(4));
@@ -168,7 +169,8 @@
         // ~p3_guitarVerbRoutine.play;
         // ~p3_varsawVerbRoutine.play;
     };
-
+    ~p3_bassline_1.play(~p3_clock, Quant(4));
+    ~p3_bassline_1.stop
     ~p3_bassline_1 = Routine {
         var next = true;
     
@@ -185,16 +187,18 @@
         
             note = ~p3_bassNote;
             if(~p3_bassMove) {
-                if(~p3_y <= 0.5 && next) {
-                    note = [~p3_bassNote-5, ~p3_bassNote+7].wchoose([0.25, 0.25]);
-                    if(0.9.coin) {
-                        next = false;
-                    };
+                // if(~p3_y <= 0.5 && next) {
+                if(~p3_y <= 0.5) {
+                    
+                    note = [~p3_bassNote, ~p3_bassNote-5, ~p3_bassNote+7, ~p3_bassNote-12, ~p3_bassNote+12].wchoose([5, 3, 1, 2, 1].normalizeSum);
+                    // if(0.9.coin) {
+                        // next = false;
+                    // };
         
                 } {
-                    if(0.1.coin) {
-                        next = true;
-                    };
+                    // if(0.1.coin) {
+                        // next = true;
+                    // };
                 };
             };
         
@@ -345,7 +349,7 @@
       }).normalizeSum;
 
       if(~debug) {
-          sectionWait = 1;
+          sectionWait = 10;
       } {
           sectionWait = 60;
       };
@@ -473,9 +477,9 @@
         var playNext = true;
         var doubleWait = 0.5;
         var subMultArray;
-
+        
         ~p3_bassNote = 57;
-
+        
         inf.do {|i|
 
             // Switch bassnote from b6 to 5 every 32 beats
@@ -505,8 +509,10 @@
                 } {
                     //If all samples should be used, at any point
                     if(value) {
+                        "hi".postln;
                         // If the previous beat was to take up twice it's normal duration
                         if(playNext) {
+                            "bye".postln;
                             // Whether or not to play a note
                             if(~p3_x.max(~p3_drumWildPlayNoteMin).coin) {
                                 item = drumBufs.wchoose([1, 2, 4].normalizeSum);
@@ -573,10 +579,10 @@
                                     doubleWait;
                                 );
                             };
+                        } {
+                            playNext = true;
                         };
-                    } {
-                        playNext = true;
-                    };
+                    } 
                 };
             };
             0.5.wait;

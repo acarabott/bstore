@@ -58,7 +58,7 @@ r = Routine {
         10.wait;
     };
 };
-
+r.stop
 r.play
 ~p1_chords = List[];
 ~p1_chords.add([45, 47, 54, 61]);
@@ -75,7 +75,7 @@ r.play
 
 ~p1_synths.do { |item, i|
     item.set(\min, 0.01);
-    item.set(\lag, 0.25);
+    item.set(\lag, 1);
 };
 
 
@@ -88,7 +88,7 @@ x.(2)
     item.set(\rootnote, ~p1_chord[i]);
 };
 
-
+MultiTouchPad.start
 MultiTouchPad.setAction = {|curID, xys| 
     var x, y;
     var x1, x2, x3, x4, y1, y2, y3, y4;
