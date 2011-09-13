@@ -218,7 +218,6 @@
             var amp;
             var note;
             var rand;
-            var leftAct, rightAct;
             var xpos;
             
             if(i%4 == 0) {
@@ -229,10 +228,7 @@
         
             note = ~p3_bassNote;
             if(~p3_bassMove) {
-                leftAct = (~data[0] + ~data[2]) / 2;
-                rightAct = (~data[1] + ~data[3]) / 2;
-            
-                if(leftAct >= ~p3_bassThresh || (rightAct >= ~p3_bassThresh)) {  
+                if(~p3_data[\left] >= ~p3_bassThresh || (~p3_data[\right] >= ~p3_bassThresh)) {  
                     if(~p3_bassEnd.not) {
                         note = firstNotes.wchoose(firstWeights);
                     } {
@@ -240,13 +236,13 @@
                     };
                     
                     if(~p3_bassHigh.coin) {
-                        if(leftAct >= rightAct) {
-                            xpos = leftAct.neg;
+                        if(~p3_data[\left] >= ~p3_data[\right]) {
+                            xpos = ~p3_data[\left].neg;
                         } {
-                            xpos = rightAct;
+                            xpos = ~p3_data[\right];
                         };
                         
-                        Synth.before(~testVerb, \BSP3_Bass, [\out, ~testBus, \freq, (note+12).midicps, \amp, amp*~p3_amps[\bass], \xpos, ~p3_left.neg + ~p3_right, \ypos, ~data.mean.linlin(0, 1, 0, [1, -1].choose)]);
+                        Synth.before(~testVerb, \BSP3_Bass, [\out, ~testBus, \freq, (note+12).midicps, \amp, amp*~p3_amps[\bass], \xpos, ~p3_data[\left].neg + ~p3_data[\right], \ypos, ~p3_data[\mean].linlin(0, 1, 0, [1, -1].choose)]);
                     };
                 };
             };
@@ -270,7 +266,7 @@
             hatsWrap = ~p3_hatsPat.wrapAt(i);
 
             if(~p3_drumPanMoving) {
-                xpos = ~p3_left.neg + ~p3_right;
+                xpos = ~p3_data[\left].neg + ~p3_data[\right];
             } {
                 xpos = 0;
             };
@@ -836,10 +832,15 @@
     ~p3_amps.add(\drum_snare -> 1);
     ~p3_amps.add(\drum_hats -> 1);
     
-    ~p3_left    = 0;
-    ~p3_right   = 0; 
-    ~p3_top     = 0;
-    ~p3_bottom  = 0;
+    ~p3_data = Dictionary.new;
+    ~p3_data.add(\left -> 0);
+    ~p3_data.add(\right -> 0);
+    ~p3_data.add(\top -> 0);
+    ~p3_data.add(\bottom -> 0);
+    ~p3_data.add(\1 -> 0);
+    ~p3_data.add(\2 -> 0);
+    ~p3_data.add(\3 -> 0);
+    ~p3_data.add(\4 -> 0);
     
     ~p3_root = 50;
     ~p3_bassNote = ~p3_root;
