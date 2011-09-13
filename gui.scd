@@ -53,25 +53,45 @@
     CompositeView.new(~p3_activityWin, Rect(item[0], item[1], 200, 100)).background_(~p3_activityColors[i])
 });
 
-~p3_activityScaleComp = CompositeView(~p3_activityWin, Rect(400, 0, 200, 400));
-~p3_activityScaleComp.addFlowLayout;
+~p3_activityMulComp = CompositeView(~p3_activityWin, Rect(400, 0, 200, 400));
+~p3_activityMulComp.addFlowLayout;
 [\1, \2, \3, \4, \master].do { |item, i|
     var slider = EZSlider(
-        ~p3_activityScaleComp, 
-        35@350, 
+        ~p3_activityMulComp, 
+        35@175, 
         item.asString, 
         ControlSpec(1, 4, \lin, 0.01, 1, "mult"),
-        {|ez| ~p3_dataScale[item] = ez.value},
+        {|ez| ~p3_dataMul[item] = ez.value},
         1,
         layout:\vert
     );
     
     slider.labelView.align_(\center);
 };
-~p3_activityScaleLabel = StaticText(~p3_activityScaleComp, 200@35)
-    .string_("Scaling")
+~p3_activityMulLabel = StaticText(~p3_activityMulComp, 200@20)
+    .string_("Mul")
     .align_(\center)
-    .font_(Font("Helvetica", 22));
+    .font_(Font("Helvetica", 16));
+~p3_activityAddComp = CompositeView(~p3_activityWin, Rect(400, 200, 200, 400));
+~p3_activityAddComp.addFlowLayout;
+[\1, \2, \3, \4, \master].do { |item, i|
+    var slider = EZSlider(
+        ~p3_activityAddComp, 
+        35@175, 
+        item.asString, 
+        ControlSpec(0, 1, \lin, 0.01, 0, "add"),
+        {|ez| ~p3_dataAdd[item] = ez.value},
+        0,
+        layout:\vert
+    );
+    
+    slider.labelView.align_(\center);
+};
+~p3_activityAddLabel = StaticText(~p3_activityAddComp, 200@20)
+    .string_("Add")
+    .align_(\center)
+    .font_(Font("Helvetica", 16));
+
 ~p3_activityOut = [[600,0], [800, 0], [600, 200], [800, 200]].collect({ |item, i| 
     CompositeView.new(~p3_activityWin, Rect(item[0], item[1], 200, 100)).background_(~p3_activityColors[i])
 });

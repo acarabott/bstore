@@ -27,12 +27,19 @@
 
 ~p3_data.add(\mean -> 0);
 
-~p3_dataScale = Dictionary.new;
-~p3_dataScale.add(\1 -> 1);
-~p3_dataScale.add(\2 -> 1);
-~p3_dataScale.add(\3 -> 1);
-~p3_dataScale.add(\4 -> 1);
-~p3_dataScale.add(\master -> 1);
+~p3_dataMul = Dictionary.new;
+~p3_dataMul.add(\1 -> 1);
+~p3_dataMul.add(\2 -> 1);
+~p3_dataMul.add(\3 -> 1);
+~p3_dataMul.add(\4 -> 1);
+~p3_dataMul.add(\master -> 1);
+
+~p3_dataAdd = Dictionary.new;
+~p3_dataAdd.add(\1 -> 0);
+~p3_dataAdd.add(\2 -> 0);
+~p3_dataAdd.add(\3 -> 0);
+~p3_dataAdd.add(\4 -> 0);
+~p3_dataAdd.add(\master -> 0);
 
 ~p3_root = 50;
 ~p3_bassNote = ~p3_root;

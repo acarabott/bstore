@@ -1,3 +1,40 @@
+~p3_updateData = {|mulAdd|
+    ~p3_data[\1] = mulAdd[0];
+    ~p3_data[\2] = mulAdd[1];
+    ~p3_data[\3] = mulAdd[2];
+    ~p3_data[\4] = mulAdd[3];
+    ~p3_data[\left] = (mulAdd[0] + mulAdd[2]) / 2;
+    ~p3_data[\right] = (mulAdd[1] + mulAdd[3]) / 2;
+    ~p3_data[\top] = mulAdd[0..1].mean;
+    ~p3_data[\bottom] = mulAdd[2..3].mean;
+    ~p3_data[\total] = mulAdd.sum;
+    ~p3_data[\lrdiff] = ~p3_data[\left].neg + ~p3_data[\right];
+    ~p3_data[\tbdiff] = ~p3_data[\top].neg + ~p3_data[\bottom];
+    ~p3_data[\mean] = mulAdd.mean;    
+};
+
+~p3_updateGUI = {|data, mulAdd|
+    {
+        data.linlin(0, 1, 0, 200).do { |item, i|
+            var inBounds = ~p3_activityIn[i].bounds;
+            var outBounds = ~p3_activityOut[i].bounds;
+            var top;
+            var out;
+        
+            if(i > 1) {
+                top = 200;
+            } {
+                top = 0
+            };
+            
+            out = mulAdd[i].linlin(0, 1, 0, 200);
+    
+            ~p3_activityIn[i].bounds = Rect(inBounds.left, top + 200 - item, 200, item);
+            ~p3_activityOut[i].bounds = Rect(outBounds.left, top + 200 - out, 200, out);
+        };
+    }.fork(AppClock);
+};
+
 ~p3_stop = {
     //Responder
     ~p3_responder.remove;    
