@@ -841,6 +841,8 @@
     ~p3_data.add(\2 -> 0);
     ~p3_data.add(\3 -> 0);
     ~p3_data.add(\4 -> 0);
+    ~p3_data.add(\total -> 0);
+    ~p3_data.add(\mean -> 0);
     
     ~p3_root = 50;
     ~p3_bassNote = ~p3_root;
