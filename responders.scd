@@ -1,5 +1,5 @@
-o = OSCresponderNode(s.addr, '/activity', {|t, r, msg| }).add;
-o.action_({|t, r, msg|
+~p3_responder = OSCresponderNode(s.addr, '/activity', {|t, r, msg| }).add;
+~p3_responder.action_({|t, r, msg|
     var data = msg[1..4];
     var scaled = data.collect({ |item, i| 
         (item * ~p3_dataScale[i] * ~p3_dataScale[4]).min(1);

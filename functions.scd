@@ -1,3 +1,39 @@
+~p3_stop = {
+    //Responder
+    ~p3_responder.remove;    
+
+    //Routines
+    [~p3_bassline, ~p3_drumBuild, ~p3_drumRoutine, ~p3_drumWildRoutine, ~p3_guitarStart, ~p3_guitarMelody, ~p3_interactiveGuitar, ~p3_drumWildControl, ~p3_section1Control].do { |item, i|
+        item.stop;
+    };
+    
+    //Synths
+    [~p3_drumVerb, ~p3_guitarVerb, ~p3_varsawVerb, ~p3_bassVerb].do { |item, i|
+        item.free;
+    };
+    
+    //Busses
+    [~p3_drumVerbBus, ~p3_guitarVerbBus, ~p3_varsawVerbBus, ~p3_bassVerbBus].do { |item, i|
+        item.free;
+    };
+    
+    //Buffers
+    ~p3_buffers.do { |item, i|
+        if(item.class == Array) {
+            item.do { |jtem, j|
+                jtem.free;
+            };
+        } {
+            item.free;
+        };
+    };
+    
+    //GUI
+    [~p3_mixer, ~p3_activityWin].do { |item, i|
+        item.close;
+    };
+};
+
 ~p3_drumReset = {
     //  Initialise
     ~p3_hatsOn     = false;

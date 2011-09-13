@@ -1,5 +1,5 @@
 // Mixer
-~p3_mixer = Window("BStorePiece3 Mixer", Rect(100, 100, 400, 600)).front;
+~p3_mixer = Window("BStorePiece3 Mixer", Rect(100, 100, 270, 600)).front;
 ~p3_mixer.view.addFlowLayout;
 ~p3_mixerCompBounds = (~p3_mixer.bounds.width - (~p3_mixer.view.decorator.gap.x * 2))@((~p3_mixer.bounds.height/2) - (~p3_mixer.view.decorator.gap.y*2));
 ~p3_mixerTop = CompositeView(~p3_mixer, ~p3_mixerCompBounds);
@@ -11,7 +11,7 @@
     var split = item[0].asString.split($_);
     var view, width;
 
-    width = 50;
+    width = 60;
     if(split[0].contains("drum")) {
         view = ~p3_mixerBot;
         if(split[0].contains("s").not) {
@@ -78,6 +78,11 @@
 ~p3_viewsUp = true;
 ~p3_activityOut.do { |item, i|
     item.bounds = item.bounds.height_(100)
+};
+
+// Server Meter
+if(~p3_meterUp.not) {
+    s.meter;
 };
 
 

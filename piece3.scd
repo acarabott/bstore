@@ -3,43 +3,29 @@
 
 s.options.memSize = 2**18;
 ~p3_path = "/Users/arthurc/Documents/programming/computerMusic/bstore/";
-
 s.waitForBoot {
-    var files = ["variables", "synthdefs", "busses", "responders", "functions", "buffers", "synths", "gui", "playRoutines", "controlRoutines"];
-    var syncs = ["synthdefs", "buffers", "busses", "synths", "playRoutines"];
-    {
-        files.do { |item, i|
-            (~path ++ item ++ ".scd").loadPath;
-            
-            if(syncs.includes(item)) {
-                s.sync;
+    ~p3_setup = {
+        var files = ["variables", "synthdefs", "busses", "responders", "functions", "buffers", "synths", "gui", "playRoutines", "controlRoutines"];
+        var syncs = ["synthdefs", "buffers", "busses", "synths", "playRoutines"];
+        {
+            files.do { |item, i|
+                (~p3_path ++ item ++ ".scd").loadPath;
+
+                if(syncs.includes(item)) {
+                    s.sync;
+                };
             };
-        };
-    }.fork
-};
-
-~p3_control.play
-~p3_stop.();
-~p3_reset.();
-
-(
-~p3_stop = {
-    [~p3_control, ~p3_drumBuild, ~p3_bassline, ~p3_drumRoutine, ~p3_guitarStart, ~p3_guitarMelody, ~p3_interactiveGuitar, ~p3_drumVerbRoutine, ~p3_guitarVerbRoutine, ~p3_varsawVerbRoutine].do { |item, i|
-        item.stop;
+        }.fork(AppClock); 
     };
+    ~p3_setup.();
+    ~p3_meterUp = true;
 };
 
-~p3_reset = {
-    ~p3_variables.();
-    ~p3_responders.();
-    ~p3_synths.();
-    ~p3_playRoutines1.();
-    ~p3_playRoutines2.();
-    ~p3_playRoutines3.();    
-    ~p3_playRoutines4.();
-    ~p3_controlRoutines1.();    
-};
-)
+
+//Reset
+~p3_stop.();
+~p3_setup.();
+
 
 (
     

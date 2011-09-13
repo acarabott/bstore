@@ -33,14 +33,18 @@ c.test = true; c.signal;
 
 
 ~p3_drumActivityChanging = true;
+~p3_drumAmpChanging = false;
 ~p3_drumReverbChanging = false;
 ~p3_drumReverbFunc = {|data|
     var max = data.maxItem;
     ~p3_drumVerb.set(\room, max.linlin(0, 0.8, 0, 0.9));
-    ~p3_amps[\drums] = max.linlin(0, 1, 0.4, 1);
-        
+    
 };
 
+~p3_drumAmpFunc = {|data|
+    var max = data.maxItem;
+    ~p3_amps[\drums] = max.linlin(0, 1, 0.4, 1);    
+}
 ~p3_drumActivityFunc = {|data|
     var min, val;
     

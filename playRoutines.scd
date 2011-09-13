@@ -34,7 +34,7 @@
                         xpos = ~p3_data[\right];
                     };
                     
-                    Synth.before(~testVerb, \BSP3_Bass, [\out, ~testBus, \freq, (note+12).midicps, \amp, amp*~p3_amps[\bass], \xpos, ~p3_data[\left].neg + ~p3_data[\right], \ypos, ~p3_data[\mean].linlin(0, 1, 0, [1, -1].choose)]);
+                    Synth.before(~p3_bassVerb, \BSP3_Bass, [\out, ~p3_bassVerbBus, \freq, (note+12).midicps, \amp, amp*~p3_amps[\bassHigh], \xpos, ~p3_data[\left].neg + ~p3_data[\right], \ypos, ~p3_data[\mean].linlin(0, 1, 0, [1, -1].choose)]);
                 };
             };
         };
@@ -303,7 +303,7 @@
     }
 };
 
-  ~p3_interactiveGuitar = Routine {
+~p3_interactiveGuitar = Routine {
     var startTime = SystemClock.beats;
     var rates = [1, 1.5, 2, 3, 4];
     var diaRates = [1, 2, 4];
