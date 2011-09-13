@@ -1,4 +1,4 @@
-n = NetAddr("127.0.0.1", 57120);
+ n = NetAddr("127.0.0.1", 57120);
 o = OSCresponderNode(n, '/activity', {|t, r, msg| }).add;
 o.action_({|t, r, msg|
     var data = msg[1..4];
