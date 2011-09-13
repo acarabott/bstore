@@ -1,12 +1,23 @@
 ~debug = true;
 ~debug = false;
 
-~p3_server.();
-~p3_loadsynthdefs.();
-~p3_variables.();
-~p3_busses.();
-~p3_responders.();
-~p3_functions.();
+s.options.memSize = 2**18;
+~p3_path = "/Users/arthurc/Documents/programming/computerMusic/bstore/";
+
+s.waitForBoot {
+    var files = ["variables", "synthdefs", "busses", "responders", "gui", "functions"];
+    var syncs = ["synthdefs", "buffers", "busses"];
+    {
+        files.do { |item, i|
+            (~path ++ item ++ ".scd").loadPath;
+            
+            if(syncs.includes(item)) {
+                s.sync;
+            };
+        };
+    }.fork
+};
+
 ~p3_buffers.();
 ~p3_synths.();
 ~p3_createMixer.();
@@ -288,14 +299,14 @@
             };
             if(~p3_hatsOn) {
                 if(hatsWrap == 1) {
-                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\hats], \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus, \xpos, xpos]);
+                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\hats].choose, \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus, \xpos, xpos]);
                 } {
                     if(hatsWrap > 1 && (1 / hatsWrap).coin) {
-                        Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\hats], \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus, \xpos, xpos]);
+                        Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\hats].choose, \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus, \xpos, xpos]);
                     };
 
                     if(~p3_hatsPat === ~p3_hatsPats[\main] && (hatsWrap == 2)) {
-                        ~p3_double.({|i| Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\hats], \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus, \xpos, xpos])}, 2, 2);
+                        ~p3_double.({|i| Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\hats].choose, \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus, \xpos, xpos])}, 2, 2);
                     };
                 };
             };
@@ -525,7 +536,7 @@
         // TODO Reactive panning on this
         // TODO Divide up activity levels based on quarters. One for rate other for madness
         var rateSig = Env.new([1, 2, 1, 0.05], [1,0.5, 1]).asSignal(100);
-        var drumBufs = [~p3_buffers[\kick], ~p3_buffers[\snare], ~p3_buffers[\hats]];
+        var drumBufs = [~p3_buffers[\kick], ~p3_buffers[\snare], ~p3_buffers[\hats].choose];
         var multArray = [2, 3, 4, 6, 8, 12, 16];
         var playNext = true;
         var doubleWait = 0.5;
@@ -811,378 +822,12 @@
 };
 );
 
+
+// TODO deal withi all ~p3_x and ~p3_y
+
 (
-~p3_server = {
-    s.options.memSize = 2**18;
-    s.waitForBoot {
-        "Server Booted".postln;        
-    };
-};
-
-~p3_variables = {
-    ~p3_clock = TempoClock(160/60);
-    ~p3_controlCondition = Condition.new(false);
-    ~p3_sectionDuration = 300;
-    ~p3_amps = Dictionary.new;
-    ~p3_amps.add(\bass -> 1);
-    ~p3_amps.add(\guitar -> 1);
-    ~p3_amps.add(\varsaw -> 0.4);
-    ~p3_amps.add(\drums -> 1);
-    ~p3_amps.add(\drum_kick -> 1);
-    ~p3_amps.add(\drum_snare -> 1);
-    ~p3_amps.add(\drum_hats -> 1);
-    
-    ~p3_data = Dictionary.new;
-    ~p3_data.add(\left -> 0);
-    ~p3_data.add(\right -> 0);
-    ~p3_data.add(\top -> 0);
-    ~p3_data.add(\bottom -> 0);
-    ~p3_data.add(\1 -> 0);
-    ~p3_data.add(\2 -> 0);
-    ~p3_data.add(\3 -> 0);
-    ~p3_data.add(\4 -> 0);
-    ~p3_data.add(\total -> 0);
-    ~p3_data.add(\mean -> 0);
-    
-    ~p3_root = 50;
-    ~p3_bassNote = ~p3_root;
-    
-    ~p3_bassMove = false;
-    ~p3_bassEnd = false;
-    ~p3_bassHigh = 0;
-    ~p3_bassThresh = 0.5;
-    
-    ~p3_drumPanMoving = false;
-    ~p3_kickOn      = false;
-    ~p3_snareOn     = false;
-    ~p3_hatsOn      = false;
-    ~p3_snarePats   = Dictionary.new;
-    ~p3_hatsPats    = Dictionary.new;
-    ~p3_kickPats    = Dictionary.new;
-    ~p3_kickPats.add(\main -> [1, 0, 0, 0,      0, 0, 1, 1,     0, 0, 1, 0,     0, 0, 0, 0]);
-    ~p3_snarePats.add(\main ->      [0, 0, 0, 1,      0, 0, 0, 0,     0, 0, 0, 0,     1, 10, 10, 10]);
-    ~p3_snarePats.add(\active ->    [0, 0, 0, 1,      0, 0, 1, 2,     1, 0, 2, 0,     1, 5, 5, 5]);
-    ~p3_hatsPats.add(\offbeat ->    [0, 0, 1, 0]);
-    ~p3_hatsPats.add(\main ->       [0, 10, 1, 0,      0, 1, 0, 0,     0, 1, 0, 10,     0, 0, 1, 0]);
-    ~p3_hatsPats.add(\quavers ->    [1, 0]);
-    
-    ~p3_snarePat    = ~p3_snarePats[\main];
-    ~p3_hatsPat     = ~p3_hatsPats[\main];
-    ~p3_kickPat    = ~p3_kickPats[\main];
-    
-    ~p3_drumRoomInit = 0.2;
-    ~p3_guitarRoomInit = 0.8;
-    ~p3_varsawRoomInit = 1;
-    ~p3_bassRoomInit = 0.8;
-    
-    ~p3_guitarRetrig = 0.3;
-    ~p3_guitarResolved = false;
-    
-    ~p3_lastGuitar = nil;
-    ~p3_lastStarter = nil;
-    ~p3_guitarNoteCount = 4;
-    ~p3_guitarPhrasesCount = 4;
-    ~p3_guitarResolvers = [0, 1, 2, 4, 5, 7];
-    ~p3_phraseResolvers = [0, 7];
-    
-    ~p3_guitarMelodies = Dictionary.new;
-    ~p3_guitarMelodies.add(\one ->      [[4, 4], [3, 4], [5, 4], [1, 4],    [4, 4], [3, 4], [1, 1.5],           [0, 1.5], [2, 1.5], [nil, 3.5]] );
-    ~p3_guitarMelodies.add(\two ->      [[5, 4], [6, 4], [7, 4], [4, 4],    [5, 4], [6, 4], [4, 8]]);
-    ~p3_guitarMelodies.add(\three ->    [[2, 2], [1, 2], [2, 1], [3, 2],    [2, 2], [1, 2], [2, 1], [0, 2],     [2, 2], [1, 2], [2, 1], [3, 2], [4, 4], [nil, 3]]);
-    ~p3_guitarMelodies.add(\four -> [[7, 1.5], [4, 1.5], [5, 1.5], [2, 1.5], [nil, 4], [4, 1.5], [2, 1.5], [3, 1.5], [0, 1.5], [nil, 4]]);
-    ~p3_guitarMelodies.add(\five -> [[7, 4], [4, 4], [5, 4], [2, 4], [nil, 8], [4, 4], [2, 4], [4, 4], [0, 4], [nil, 4]]);
-    ~p3_guitarMelodies.add(\six -> [[0, 4], [1, 4], [2, 8],    [2, 4], [3, 4], [4, 8]]);
-    ~p3_guitarMelodies.add(\seven -> [[4, 4], [3, 6], [0, 2], [2, 2]]);
-    ~p3_guitarMelodies.add(\eight -> [[0, 2], [0, 2], [1, 2], [1, 2], [2, 2], [2, 2], [5, 2], [4, 2], [4, 8]]);
-    ~p3_guitarMelodies.add(\nine -> [[0, 2], [0, 2], [1, 2], [1, 2], [2, 2], [2, 2], [5, 2], [4, 2], [4, 4], [3, 2], [5, 1], [2, 4], [nil, 5]]);
-    
-    
-    ~p3_thickGuitarHarmony = false;
-    ~p3_guitarMelodyOctave = 1;
-    ~p3_guitarStartActivityLevel = 1/16;
-    ~p3_guitarMelodyActivityLevel = 0;
-    ~p3_guitarMelodyCount = 0;
-    
-    ~p3_guitarInteractiveActivityLevel = 0.3;
-    
-    ~p3_drumWildKickPats = List[];
-    ~p3_drumWildKickPats.add([1, 0, 0, 0, 0, 0, 0, 0]);
-    ~p3_drumWildKickPats.add([1, 0, 0,  1, 0, 0,    1, 1, 0,    1, 1, 0,    1, 0, 0, 0]);
-    ~p3_drumWildKickPats.add([1, 0, 0, 0]);
-    ~p3_drumWildKickPats.add([0]);
-
-
-    ~p3_drumWildSnarePats = List[];
-    ~p3_drumWildSnarePats.add([0, 0, 0, 0, 1, 0, 0, 0]);
-    ~p3_drumWildSnarePats.add([0, 0, 5, 0,      1, 0, 0, 0,     0, 0, 5, 0,     1, 0, 0, 0]);
-    ~p3_drumWildSnarePats.add([0, 0, 5, 0,      1, 0, 0, 0,     10, 10, 5, 10,     1, 10, 10, 10]);
-    ~p3_drumWildSnarePats.add([0]);
-
-    ~p3_drumWildHatsPats = List[];
-    ~p3_drumWildHatsPats.add([0]);
-    ~p3_drumWildHatsPats.add([0, 0, 1, 0]);
-    ~p3_drumWildHatsPats.add([1, 0]);
-    ~p3_drumWildHatsPats.add([1, 0, 0]);
-
-    ~p3_drumWildPats = Dictionary();
-    ~p3_drumWildPats.add(\kick  -> ~p3_drumWildKickPats[0]);
-    ~p3_drumWildPats.add(\snare -> ~p3_drumWildSnarePats[0]); 
-    ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[0]);    
-    ~p3_drumWildPats.add(\all -> false);
-
-
-    ~p3_drumWildPlayNext = 0.15;
-    ~p3_drumWildPlayNoteMin = 0.4;
-    ~p3_drumWildMultMin = 0.2;
-    ~p3_drumWildMultMax = 0.8;
-    ~p3_drumWildRateMoves = false;
-    
-    "Variables initialised".postln;
-};
-
-~p3_loadsynthdefs = {
-    SynthDef(\BSP3_Bass) { |out=0, freq=110, amp=1, xpos=0, ypos=0|
-        var saw = LFSaw.ar(freq, 0, amp/6);
-        var sin = SinOsc.ar(freq, 0, amp);
-        var env = Env.perc(0.01, 0.5, 1);
-        var envgen = EnvGen.ar(env, doneAction: 2);
-        var sig = Mix.ar([saw, sin]);
-        Out.ar(out,
-            Pan4.ar(sig*envgen, xpos, ypos);
-        );
-
-    }.add;
-
-    SynthDef(\BSP3_Sampler) { |out=0, buf=0, amp=0.5, pan=0, rate=1, dur=8, tail=1, xpos=0, ypos=0|
-        var sig = PlayBuf.ar(1, buf, BufRateScale.kr(buf)*rate, doneAction: 2)*amp;
-        var env = EnvGen.ar(Env.new([1,1,0], [dur, tail]), doneAction: 2);
-        
-        Out.ar(out,
-            Pan4.ar(sig*env, xpos, ypos)
-        );
-    }.add;
-
-    SynthDef(\BSP3_Mouse) { |out=0, rate=10|
-        var imp = Impulse.kr(rate);
-        var x = MouseX.kr(0, 1, 0, 0);
-        var y = MouseY.kr(1, 0, 0, 0);
-    
-        SendReply.kr(imp, \xy, [x, y]);
-    }.add;
-
-    SynthDef(\BSP3_Reverb) { |in=0, out=0, mix=0.5, room=0.8, damp=0.4|
-        var sig = In.ar(in, 4);
-        var verbFront   = FreeVerb2.ar(sig[0], sig[1], mix, room, damp);
-        var verbBack    = FreeVerb2.ar(sig[2], sig[3], mix, room, damp);
-        var verbLeft    = FreeVerb2.ar(sig[0], sig[2], mix, room, damp);
-        var verbRight   = FreeVerb2.ar(sig[1], sig[3], mix, room, damp);
-
-
-        Out.ar(out,
-            [
-                Mix.ar([sig[0], verbFront[0]/2, verbLeft[0]/2]), 
-                Mix.ar([sig[1], verbFront[1]/2, verbRight[0]/2]), 
-                Mix.ar([sig[2], verbBack[0]/2, verbLeft[1]/2]),
-                Mix.ar([sig[3], verbBack[1]/2, verbRight[1]/2])
-            ]
-        );
-    }.add;    
-    
-    // TODO Make rate and fgain interactive
-    // TODO replace mousey with interactive
-    SynthDef(\BSP3_VarSaw) { |out=0, freq=440, amp=0.25, pan=0, att=0.2, sus=0.75, rel=1, rate=0.5, fgain=2, xpos=0, ypos=0|
-        var sig = Mix.new(VarSaw.ar(freq * [0.5,1,2], 0, LFNoise1.kr(0.3,0.1,0.1), 0.1));
-        var line = Line.kr(8000, 1000, 1);
-        var lpf = LPF.ar(sig, line);
-        var moog = MoogFF.ar(lpf, SinOsc.kr(rate).range(400,10000), fgain);
-        var env = EnvGen.ar(Env.linen(att, sus, rel, amp, 'sine'), doneAction: 2);
-        var madmoog = MoogFF.ar(lpf, line, MouseY.kr(4, 0)).range(-0.1, 0.1);
-        var final = Mix.ar([moog, madmoog]);
-        
-        Out.ar(out,
-            Pan4.ar(final * env, xpos, ypos)
-        );
-    }.add;
-    
-    "SynthDefs loaded".postln;
-};
-
-~p3_busses = {
-    // TODO Will need to have 4 channel busses and two reverbs per bus
-    ~p3_drumVerbBus = Bus.audio(s, 4);
-    ~p3_guitarVerbBus = Bus.audio(s, 4);
-    ~p3_varsawVerbBus = Bus.audio(s, 4);
-    ~p3_bassVerbBus = Bus.audio(s, 4);
-    "Busses initialised".postln;
-};
-
-~p3_responders = {
-    ~p3_mouseResponder = OSCresponderNode(s.addr, \xy, {|t, r, msg| }).add;
-
-    ~p3_mouseResponder.action_({|t, r, msg|
-        ~p3_x = msg[3];
-        ~p3_y = msg[4];
-        // TODO Move updating routines to here?...
-        
-        // TODO Remove this
-        ~p3_guitarInteractiveActivityLevel = ~p3_y;
-        ~p3_guitarStartActivityLevel = ~p3_y;
-    });
-    
-    "Responders loaded".postln;
-};
-);
-(
-~p3_functions = {
-    // GUI
-    ~p3_createMixer = {
-        ~p3_mixer = Window("BStorePiece3 Mixer", Rect(100, 100, 400, 600)).front;
-        ~p3_mixer.view.addFlowLayout;
-        ~p3_mixerCompBounds = (~p3_mixer.bounds.width - (~p3_mixer.view.decorator.gap.x * 2))@((~p3_mixer.bounds.height/2) - (~p3_mixer.view.decorator.gap.y*2));
-        ~p3_mixerTop = CompositeView(~p3_mixer, ~p3_mixerCompBounds);
-        ~p3_mixerTop.addFlowLayout;
-        ~p3_mixerBot = CompositeView(~p3_mixer, ~p3_mixerCompBounds);
-        ~p3_mixerBot.addFlowLayout;
-        ~p3_sliders = List[];
-        ~p3_amps.asSortedArray.do { |item|
-            var split = item[0].asString.split($_);
-            var view, width;
-
-            width = 50;
-            if(split[0].contains("drum")) {
-                view = ~p3_mixerBot;
-                if(split[0].contains("s").not) {
-                    width = 31;
-                };
-            } {
-                view = ~p3_mixerTop;        
-            };
-            ~p3_sliders.add(EZSlider(
-                view, 
-                width@(~p3_mixer.bounds.height*0.45), 
-                item[0].asString.split($_).last, 
-                ControlSpec.new(0, 1.5, \lin, 0.01, 1, "amp"), 
-                {|slider|
-                    ~p3_amps[item[0]] = slider.value;
-                },
-                item[1],
-                layout:\vert
-                )
-            );
-            ~p3_sliders.last.labelView.align_(\center);
-        };    
-        "Mixer created".postln;
-    };
-    
-    ~p3_drumReset = {
-        //  Initialise
-        ~p3_hatsOn     = false;
-        ~p3_kickOn     = false;
-        ~p3_snareOn    = false;
-        ~p3_hatsPat    = ~p3_hatsPats[\offbeat];
-        ~p3_snarePat    = ~p3_snarePats[\main];
-        
-        // ~p3_drumVerbRoutine.stop;
-        // 0.5.wait;
-        // ~p3_drumVerbRoutine.reset;
-        // ~p3_drumVerbRoutine.play;
-        ~p3_drumVerb.set(\room, ~p3_drumRoomInit);    
-        
-        "Drums reset".postln;
-    };
-    
-    ~p3_double = {|func, mult=2, div=2, wait=0.5|
-        {
-            mult.do { |i|
-                func.(i);
-                (wait / (div)).wait;
-            };
-        }.fork(~p3_clock)
-    };
-    
-    ~p3_getNeighbours = {|index, max, step=1|
-        var ret = List[];
-        if(index - step >= 0) {
-            ret.add(index-step);
-        };
-        if((index + step) <= max) {
-            ret.add(index+step);
-        };
-        
-        ret;
-    };
-    ~p3_setNeighbours = {|collection, neighbours, value|
-        neighbours.do { |item, i|
-            collection[item] = value;
-        };
-        
-        collection;
-    };
-    
-    ~p3_guitarNote = {|rate=1, amp=1|
-        var buffer, weights, nearest, sResolvers, neighbours;
-        ~p3_guitarResolved = false;
-        switch (~p3_guitarNoteCount)
-            {1}  {
-                ~p3_guitarResolved = true;
-                // "resolved!".postln;
-                weights = 0!8;
-                if(~p3_guitarPhrasesCount == 1) {
-                    nearest = ~p3_lastGuitar.nearestInList(~p3_phraseResolvers);
-                    // "phrases resolved!".postln;
-                    ~p3_guitarPhrasesCount = 5;
-                } {
-                    nearest = ~p3_lastGuitar.nearestInList(~p3_guitarResolvers);                    
-                    sResolvers = ~p3_guitarResolvers.shallowCopy;
-                    sResolvers.remove(nearest);
-                    weights[~p3_lastGuitar.nearestInList(sResolvers)] = 1;
-                };
-                weights[nearest] = 1;
-                ~p3_guitarNoteCount = 5;    // 5 as 1 will be subtracted            
-                ~p3_guitarPhrasesCount = ~p3_guitarPhrasesCount - 1;
-            }
-            {4}  {
-                // "start".postln;
-                if(~p3_lastStarter.notNil && 0.5.coin) {
-                    weights = ~p3_setNeighbours.(0!8, ~p3_getNeighbours.(~p3_lastStarter, ~p3_buffers[\guitar].size-1), 1);
-                    
-                } {
-                    weights = [2,1,2,1,2,1,2,2];
-                    
-                };
-            }
-            {~p3_guitarNoteCount}    {
-                if(0.75.coin) {
-                    // "step".postln;
-                    weights = ~p3_setNeighbours.(0!8, ~p3_getNeighbours.(~p3_lastGuitar, ~p3_buffers[\guitar].size-1), 1);
-                } {
-                    // "thirds".postln;
-                    weights = ~p3_setNeighbours.(0!8, ~p3_getNeighbours.(~p3_lastGuitar, ~p3_buffers[\guitar].size-1, 2), 1);                    
-                };
-            };
-        
-        // weights.postln;
-        ~p3_guitarNoteCount = ~p3_guitarNoteCount - 1;
-        
-        buffer = ~p3_buffers[\guitar].wchoose(weights.normalizeSum);
-        ~p3_lastGuitar = ~p3_buffers[\guitar].indexOf(buffer);
-        if(~p3_guitarNoteCount == 4) {
-            ~p3_lastStarter = ~p3_lastGuitar;
-        };
-        Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, buffer, \pan, ~p3_y.linlin(0, 1, -1, 1), \amp, ~p3_amps[\guitar] * amp, \rate, 1*rate]);
-    };  
-    
-    "Functions loaded".postln;
-};
 
 ~p3_buffers = {
-    ~p3_buffers = Dictionary.new;
-    ~p3_buffers.add(\guitar -> "/Users/arthurc/Documents/programming/computerMusic/bstore/audio/guitarD/*.aif".pathMatch.collect {|file| Buffer.read(s, file)});
-    ~p3_buffers.add(\kick   -> Buffer.read(s, "sounds/kick.aif"));
-    ~p3_buffers.add(\snare  -> Buffer.read(s, "sounds/snare.aif"));
-    ~p3_buffers.add(\hats   -> Buffer.read(s, "sounds/hhc4.aif"));
-    
-    "Buffers loaded".postln;
 };
 
 ~p3_synths = {
