@@ -34,7 +34,7 @@
                         xpos = ~p3_data[\right];
                     };
                     
-                    Synth.before(~p3_bassVerb, \BSP3_Bass, [\out, ~p3_bassVerbBus, \freq, (note+12).midicps, \amp, amp*~p3_amps[\bassHigh], \xpos, ~p3_data[\left].neg + ~p3_data[\right], \ypos, ~p3_data[\mean].linlin(0, 1, 0, [1, -1].choose)]);
+                    Synth.before(~p3_bassVerb, \BSP3_Bass, [\out, ~p3_bassVerbBus, \freq, (note+12).midicps, \amp, amp*~p3_amps[\bassHigh], \xpos, ~p3_data[\lrdiff], \ypos, ~p3_data[\mean].linlin(0, 1, 0, [1, -1].choose)]);
                 };
             };
         };
@@ -78,7 +78,7 @@
         hatsWrap = ~p3_hatsPat.wrapAt(i);
 
         if(~p3_drumPanMoving) {
-            xpos = ~p3_data[\left].neg + ~p3_data[\right];
+            xpos = ~p3_data[\lrdiff];
         } {
             xpos = 0;
         };

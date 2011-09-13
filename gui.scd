@@ -55,7 +55,7 @@
 
 ~p3_activityScaleComp = CompositeView(~p3_activityWin, Rect(400, 0, 200, 400));
 ~p3_activityScaleComp.addFlowLayout;
-[\1, \2, \3, \4, \master.asString].do { |item, i|
+[\1, \2, \3, \4, \master].do { |item, i|
     var slider = EZSlider(
         ~p3_activityScaleComp, 
         35@350, 

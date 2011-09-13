@@ -22,6 +22,9 @@
 ~p3_data.add(\3 -> 0);
 ~p3_data.add(\4 -> 0);
 ~p3_data.add(\total -> 0);
+~p3_data.add(\lrdiff -> 0);
+~p3_data.add(\tbdiff -> 0);
+
 ~p3_data.add(\mean -> 0);
 
 ~p3_dataScale = Dictionary.new;
@@ -39,7 +42,7 @@
 ~p3_bassHigh = 0;
 ~p3_bassThresh = 0.5;
 
-~p3_drumPanMoving = false;
+
 ~p3_kickOn      = false;
 ~p3_snareOn     = false;
 ~p3_hatsOn      = false;
@@ -61,6 +64,11 @@
 ~p3_guitarRoomInit = 0.8;
 ~p3_varsawRoomInit = 1;
 ~p3_bassRoomInit = 0.8;
+
+~p3_drumPanMoving = false;
+~p3_drumActivityChanging = false;
+~p3_drumAmpChanging = false;
+~p3_drumReverbChanging = false;
 
 ~p3_guitarRetrig = 0.3;
 ~p3_guitarResolved = false;

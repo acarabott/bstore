@@ -10,7 +10,6 @@ s.waitForBoot {
         {
             files.do { |item, i|
                 (~p3_path ++ item ++ ".scd").loadPath;
-
                 if(syncs.includes(item)) {
                     s.sync;
                 };
@@ -30,25 +29,6 @@ s.waitForBoot {
 (
     
 ~p3_control = Routine {
-    "Bass start".postln;
-    ~p3_bassline.play(~p3_clock, Quant(4));
-    if(~debug) {
-        1.wait;
-    } {
-        10.wait;
-    };
-    "Bass Moving".postln;
-    ~p3_bassMove = true;
-    if(~debug) {
-        5.wait;
-    } {
-        60.wait;
-    };
-    "Drums start".postln;
-    ~p3_drumRoutine.play(~p3_clock, Quant(4));
-    ~p3_drumBuild.play;
-    
-    "Guitar starts".postln;
     ~p3_guitarStart.play(~p3_clock, Quant(4));
     // TODO have this accumlate activity, once it hits threshold move onto next section
     // (4 * 60).wait;
