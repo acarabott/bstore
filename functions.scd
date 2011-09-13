@@ -11,7 +11,17 @@
     ~p3_data[\lrdiff] = ~p3_data[\left].neg + ~p3_data[\right];
     ~p3_data[\tbdiff] = ~p3_data[\top].neg + ~p3_data[\bottom];
     ~p3_data[\mean] = mulAdd.mean;    
+
+    ~p3_data[\lowMax] = ~p3_data[\left].min(~p3_data[\right]);
+    
+    if(~p3_data[\lowMax] < 0.35) {
+        ~p3_data[\lowMax] = [~p3_data[\1], ~p3_data[\2], ~p3_data[\3], ~p3_data[\3]].maxItem;
+    } {
+        ~p3_data[\lowMax] = (~p3_data[\left] + ~p3_data[\right]).min(1);
+    };
+    
 };
+
 
 ~p3_updateGUI = {|data, mulAdd|
     {
@@ -122,11 +132,9 @@
     switch (~p3_guitarNoteCount)
         {1}  {
             ~p3_guitarResolved = true;
-            // "resolved!".postln;
             weights = 0!8;
             if(~p3_guitarPhrasesCount == 1) {
                 nearest = ~p3_lastGuitar.nearestInList(~p3_phraseResolvers);
-                // "phrases resolved!".postln;
                 ~p3_guitarPhrasesCount = 5;
             } {
                 nearest = ~p3_lastGuitar.nearestInList(~p3_guitarResolvers);                    
@@ -139,7 +147,6 @@
             ~p3_guitarPhrasesCount = ~p3_guitarPhrasesCount - 1;
         }
         {4}  {
-            // "start".postln;
             if(~p3_lastStarter.notNil && 0.5.coin) {
                 weights = ~p3_setNeighbours.(0!8, ~p3_getNeighbours.(~p3_lastStarter, ~p3_buffers[\guitar].size-1), 1);
                 
@@ -150,15 +157,12 @@
         }
         {~p3_guitarNoteCount}    {
             if(0.75.coin) {
-                // "step".postln;
                 weights = ~p3_setNeighbours.(0!8, ~p3_getNeighbours.(~p3_lastGuitar, ~p3_buffers[\guitar].size-1), 1);
             } {
-                // "thirds".postln;
                 weights = ~p3_setNeighbours.(0!8, ~p3_getNeighbours.(~p3_lastGuitar, ~p3_buffers[\guitar].size-1, 2), 1);                    
             };
         };
     
-    // weights.postln;
     ~p3_guitarNoteCount = ~p3_guitarNoteCount - 1;
     
     buffer = ~p3_buffers[\guitar].wchoose(weights.normalizeSum);

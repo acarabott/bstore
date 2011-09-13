@@ -26,6 +26,7 @@
 ~p3_data.add(\tbdiff -> 0);
 
 ~p3_data.add(\mean -> 0);
+~p3_data.add(\lowMax -> 0);
 
 ~p3_dataMul = Dictionary.new;
 ~p3_dataMul.add(\1 -> 1);

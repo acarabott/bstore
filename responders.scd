@@ -12,13 +12,12 @@
     ~p3_updateGUI.(data, mulAdd);
     
     if(~p3_drumReverbChanging) {
-        ~p3_drumReverbFunc.(data);
+        ~p3_drumReverbFunc.(mulAdd);
     };
     
     if(~p3_drumActivityChanging) {
-        ~p3_drumActivityFunc.(data);
+        ~p3_drumActivityFunc.(mulAdd);
     };
-    
     
 });
 

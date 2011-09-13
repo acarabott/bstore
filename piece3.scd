@@ -127,3 +127,4 @@ s.waitForBoot {
 // TODO Guitar phrases of different no.
 // TODO Mixing 
 // TODO Have scale controls for activity levels.
+// TODO Front and back fx
