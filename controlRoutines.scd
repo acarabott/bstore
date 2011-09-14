@@ -1,5 +1,5 @@
 ~p3_section1Control = Routine {
-    var start, end, index, div, inc;
+    var start, end, middle, index, div, inc;
 
     ~p3_bassMove = false;
     ~p3_bassEnd = true;
@@ -10,6 +10,7 @@
     index = 0;
     start = ~p3_sectionDuration/10;
     end = ~p3_sectionDuration/5;
+    middle - ~p3_sectionDuration - start - end;
     div = 100;
     inc = 1/div;
 
@@ -21,59 +22,30 @@
         index = index + inc;
         ~p3_bassHigh = ~p3_bassHigh + inc;
         ~p3_bassThresh = ~p3_bassThresh - inc;
-
+        ~p3_bassVerb.set(\room, ~p3_bassHigh.linlin(0, 1, 0.6, 1), \mix, ~p3_bassHigh.linlin(0, 1, 0.5, 0.9));
         if(index > 0.8) {
             ~p3_bassEnd = true;
         };
-
-        ((~p3_sectionDuration-start-end) / div).wait;
+        index.postln;
+        (middle / div).wait;
     });
     "at end".postln;
     end.wait;
     ~p3_bassMove = false;
     ~p3_bassHigh = 0;
     ~p3_bassThresh = 1;
+    ~p3_bassVerb.set(\room, ~p3_bassRoomInit, \mix, ~p3_bassMixInit);
+    "finished".postln;
 };
-
 
 "Control Routines loaded".postln;
 
-// ~p3_drumActivityChanging = false;
-// ~p3_drumAmpChanging = false;
-// ~p3_drumReverbChanging = false;
-~p3_drumReverbFunc = {|data|
-    var max = data.maxItem;
-    ~p3_drumVerb.set(\room, max.linlin(0, 0.8, 0, 0.9));
-    
-};
-
-~p3_drumAmpFunc = {|data|
-    var max = data.maxItem;
-    ~p3_amps[\drums] = max.linlin(0, 1, 0.4, 1);    
-};
-
-~p3_drumActivityFunc = {|data|    
-    ~p3_snarePat = ~p3_snarePats[\active].collect({ |item, i| 
-        if(item == 1) {
-            item
-        } {
-            item + ~p3_data[\lowMax].lincurve(0, 1, 100, 2, -4).floor;
-        };
-    });
-    ~p3_hatsPat = ~p3_hatsPats[\main].collect({ |item, i| 
-        if(item == 1) {
-            item
-        } {
-            item + ~p3_data[\lowMax].lincurve(0, 1, 100, 2, -4).floor;
-        };
-    });
-};
-
 ~p3_section2Control = Routine {
-    var start, end, index, div, inc;
+    var start, middle, end, index, div, inc;
     index = 0;
-    start = ~p3_sectionDuration/10;
+    start = ~p3_sectionDuration/5;
     end = ~p3_sectionDuration/5;
+    middle = ~p3_sectionDuration - start - end;
     div = 100;
     inc = 1/div;
 
@@ -81,7 +53,6 @@
     ~p3_snareOn = false;
     ~p3_hatsOn = true;
     
-    ~p3_drumReverbChanging = false;
     ~p3_drumActivityChanging = false;
     ~p3_snarePat    = ~p3_snarePats[\main];
     ~p3_hatsPat     = ~p3_hatsPats[\offbeat];
@@ -90,28 +61,59 @@
     "Starting".postln;
     ~p3_drumRoutine.play(~p3_clock, Quant(4));
 
-    (start/3).wait;
+    (start/4).wait;
     "Kick On".postln;
     ~p3_kickOn = true;
     
+    (start/4).wait;
+    "Snare on".postln;    
     ~p3_snareOn = true;
-    "Snare on".postln;
-    (start/3).wait;
     "Hats Main".postln;
     ~p3_hatsPat = ~p3_hatsPats[\main];
-
-    (start/3).wait;
-    "Reverb and pan".postln;
-    ~p3_drumReverbChanging = true;
-    ~p3_drumPanMoving = true;
-    // 5.wait;
     
+    (start/4).wait;
+    "Reverb and pan".postln;
+    ~p3_drumPanMoving = true;
+    "Drums more active".postln;
+    ~p3_kickPat     = ~p3_kickPats[\active];
+    ~p3_snarePat    = ~p3_snarePats[\active];
+    ~p3_hatsPat     = ~p3_hatsPats[\quavers];
+    
+    "Middle section".postln;
     ~p3_drumActivityChanging = true;
+    
+    while({index < 1}, {
+        index = index + inc;
+        index.postln;
+        ~p3_amps[\drums] = ~p3_data[\lowMax].linlin(0, 1, index.linlin(0, 1, 1, 1.5), 1);
+        ~p3_drumVerb.set(\room, ~p3_data[\lowMax].linlin(0, 0.8, index.linlin(0, 1, 0.2, 1), 0.9));
+        ~p3_drumDoubleMax = index.lincurve(0, 1, 0.05, 0.8, 4);
+        ~p3_snarePat = ~p3_snarePats[\active].collect({ |item, i| 
+            if(item == 1) {
+                item
+            } {
+                item + ~p3_data[\lowMax].linlin(0, 1, index.linlin(0, 1, 100, 20), 5).floor;
+                // item + ~p3_data[\lowMax].lincurve(0, 1, index.linlin(0, 1, 100, 10), 2, -4).floor;
+            };
+        });
+        ~p3_hatsPat = ~p3_hatsPats[\quavers].collect({ |item, i| 
+            if(item == 1) {
+                item
+            } {
+                item + ~p3_data[\lowMax].linlin(0, 1, index.linlin(0, 1, 100, 20), 5).floor;
+                // item + ~p3_data[\lowMax].lincurve(0, 1, index.linlin(0, 1, 100, 10), 2, -4).floor;
+            };
+        });
+        
+        (middle/div).wait
+    });
+    "end".postln;
+    
     end.wait;
-    // ~p3_snarePat = ~p3_snarePats[\active];
-    // ~p3_snarePats[\active];
-    // Slowly drift panning backwards and forwards?
+    "finished".postln;
+    ~p3_drumActivityChanging = false;
+    ~p3_snarePat    = ~p3_snarePats[\main];
+    ~p3_hatsPat     = ~p3_hatsPats[\offbeat];
+    ~p3_kickPat    = ~p3_kickPats[\main];
+    ~p3_drumVerb.set(\room, ~p3_drumRoomInit);
 };
-
-~p3_section2Control.play
-~p3_drumRoutine.stop

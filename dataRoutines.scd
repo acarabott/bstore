@@ -8,7 +8,7 @@ r = Routine {
         if(~p3_testMove) {
             ~p3_testData.do { |item, i|
                 if(dirs[i]) {
-                    if(item < 1) {
+                    if(item < ~rmax) {
                         ~p3_testData[i] = item + inc;
                     } {
                         dirs[i] = false;
@@ -31,10 +31,11 @@ r = Routine {
     }
 };
 
+~rmax = 1;
 
 r.play;
 r.stop
 c.test = false; c.signal;
 c.test = true; c.signal;
-~p3_testMove = false;
-~p3_testData = [1,0,1,0];
+
+~p3_testData = [0.1,0.4,0.5,0];

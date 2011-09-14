@@ -10,15 +10,7 @@
     ~p3_updateData.(mulAdd);
     
     ~p3_updateGUI.(data, mulAdd);
-    
-    if(~p3_drumReverbChanging) {
-        ~p3_drumReverbFunc.(mulAdd);
-    };
-    
-    if(~p3_drumActivityChanging) {
-        ~p3_drumActivityFunc.(mulAdd);
-    };
-    
+        
 });
 
 "Responders added".postln;

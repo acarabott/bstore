@@ -50,7 +50,7 @@
     ~p3_responder.remove;    
 
     //Routines
-    [~p3_bassline, ~p3_drumBuild, ~p3_drumRoutine, ~p3_drumWildRoutine, ~p3_guitarStart, ~p3_guitarMelody, ~p3_interactiveGuitar, ~p3_drumWildControl, ~p3_section1Control].do { |item, i|
+    [~p3_bassline, ~p3_drumBuild, ~p3_drumRoutine, ~p3_drumWildRoutine, ~p3_guitarStart, ~p3_guitarMelody, ~p3_interactiveGuitar, ~p3_drumWildControl, ~p3_section1Control, ~p3_section2Control, ~p3_section3Control, ~p3_section4Control, ~p3_section5Control, ~p3_section6Control.stop].do { |item, i|
         item.stop;
     };
     

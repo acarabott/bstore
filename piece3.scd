@@ -25,6 +25,10 @@ s.waitForBoot {
 ~p3_stop.();
 ~p3_setup.();
 
+~p3_section1Control.play
+~p3_bassline.play(~p3_clock, Quant(4));
+~p3_sectionDuration = 150
+~p3_section2Control.play
 
 (
     

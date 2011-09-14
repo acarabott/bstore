@@ -67,13 +67,13 @@
 };
 
 ~p3_drumRoutine = Routine {
-    var doDouble = {~p3_drumActivityChanging && ~p3_data[\lowMax].linlin(0, 1, 0.05, 0.5).coin};
+    var doDouble = {|mult=1| ~p3_drumActivityChanging && (~p3_data[\lowMax].linlin(0, 1, 0.05, ~p3_drumDoubleMax) * mult).coin};
     
     inf.do {|i|
         var index = i%16;
         var mult = 1;
         var kickWrap, snareWrap, hatsWrap;
-        var xpos;
+        var xpos, ypos;
         var rate, rateRangeLow, rateRangeHigh, rateRange;
         
         kickWrap = ~p3_kickPat.wrapAt(i);
@@ -82,6 +82,7 @@
 
         if(~p3_drumPanMoving) {
             xpos = ~p3_data[\lrdiff];
+            ypos = 0 + [~p3_data[\mean], ~p3_data[\mean].neg].choose;
         } {
             xpos = 0;
         };
@@ -92,7 +93,7 @@
         
         if(~p3_kickOn) {
             if(kickWrap == 1) {
-                Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\kick], \amp, ~p3_amps[\drums] * ~p3_amps[\drum_kick], \out, ~p3_drumVerbBus, \xpos, xpos]);
+                Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\kick], \amp, ~p3_amps[\drums] * ~p3_amps[\drum_kick], \out, ~p3_drumVerbBus, \xpos, xpos, \ypos, ypos]);
             };
         };
         if(~p3_snareOn) {
@@ -101,7 +102,7 @@
                     mult = 2;
                 };
                 ~p3_double.(
-                    {Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\snare], \amp, ~p3_amps[\drums] * ~p3_amps[\drum_snare], \out, ~p3_drumVerbBus, \xpos, xpos, \rate, rateRange.choose])},
+                    {Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\snare], \amp, ~p3_amps[\drums] * ~p3_amps[\drum_snare], \out, ~p3_drumVerbBus, \xpos, xpos, \ypos, ypos, \rate, rateRange.choose])},
                     mult,
                     mult,
                     0.5
@@ -112,12 +113,12 @@
             if(hatsWrap == 1) {
                 Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\hats].choose, \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus, \xpos, xpos]);
             } {
-                if(doDouble.()) {
+                if(doDouble.(2)) {
                     mult = 2;
                 };
                 if(hatsWrap > 1 && (1 / hatsWrap).coin) {
                     ~p3_double.(
-                        {Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\hats].choose, \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus, \xpos, xpos, \rate, rateRange.choose])},
+                        {Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[\hats].choose, \amp, ~p3_amps[\drums] * ~p3_amps[\drum_hats], \out, ~p3_drumVerbBus, \xpos, xpos, \ypos, ypos, \rate, rateRange.choose])},
                         mult,
                         mult,
                         0.5

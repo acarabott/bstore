@@ -58,6 +58,7 @@
 ~p3_hatsPats    = Dictionary.new;
 ~p3_kickPats    = Dictionary.new;
 ~p3_kickPats.add(\main -> [1, 0, 0, 0,      0, 0, 1, 1,     0, 0, 1, 0,     0, 0, 0, 0]);
+~p3_kickPats.add(\active -> [1, 2, 0, 0,      0, 0, 1, 1,     0, 0, 1, 2,     0, 2, 2, 0]);
 ~p3_snarePats.add(\main ->      [0, 0, 0, 1,      0, 0, 0, 0,     0, 0, 0, 0,     1, 10, 10, 10]);
 ~p3_snarePats.add(\active ->    [0, 0, 0, 1,      0, 0, 1, 2,     1, 0, 2, 0,     1, 5, 5, 5]);
 ~p3_hatsPats.add(\offbeat ->    [0, 0, 1, 0]);
@@ -71,12 +72,12 @@
 ~p3_drumRoomInit = 0.2;
 ~p3_guitarRoomInit = 0.8;
 ~p3_varsawRoomInit = 1;
-~p3_bassRoomInit = 0.8;
+~p3_bassRoomInit = 0.5;
+~p3_bassMixInit = 0.5;
 
 ~p3_drumPanMoving = false;
 ~p3_drumActivityChanging = false;
-~p3_drumAmpChanging = false;
-~p3_drumReverbChanging = false;
+~p3_drumDoubleMax = 0.05;
 
 ~p3_guitarRetrig = 0.3;
 ~p3_guitarResolved = false;
