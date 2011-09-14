@@ -22,7 +22,12 @@ s.waitForBoot {
 };
 
 
+Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, item, \xpos, ~p3_data[\lrdiff], \amp, ~p3_amps[\drums] * ~p3_amps[(\drum_ ++ ~p3_buffers.findKeyForValue(item)).asSymbol], \rate, rateFunc.(di), \out, ~p3_drumVerbBus, \dur, 0.25, \tail, 0.25])
+
+~item = ~p3_buffers.choose
+~p3_amps[\drums] * ~p3_amps[(\drum_ ++ ~p3_buffers.findKeyForValue(~item)).asSymbol]
 //Reset
+
 ~p3_stop.();
 ~p3_setup.();
 
@@ -42,45 +47,22 @@ s.waitForBoot {
 ~p3_kickOn = true;
 ~p3_snareOn = true;
 
+(-1, -0.9..1.0).collect { |num| num.scurve }.plot; 
+(~p3_data[\lrdiff]*2).range
 
+(-1, -0.9..1.0).collect { |item, i| item.bilin(0, -1, 1, 0, -1, 1)}.plot
+(-1, -0.9..1.0)
+(0,0.1..1.0).collect { |item, i| item.gaussCurve}.plot
+x = (-1, -0.9..1.0).normalize(-10, 10).collect { |num| num.lcurve } * 2
+(x-1).plot
+
+(-0.5 * 2).max(-1).min(1)
+((0.3*10).scurve * 2) -1
+0.7.scurve
+lincurve
+(-1).lincurve(-1, 1, -1, 1, 0)
 (
 ~p3_control = Routine {
-    ~p3_guitarMelodyActivityLevel = 0.2;
-    ~p3_guitarMelody.play(~p3_clock, Quant(4));
-    // as this acumulates and hits 0.75 then do 
-    ~p3_guitarMelodyActivityLevel = 0.75;
-    ~p3_snarePat = ~p3_snarePats[\active];
-    if(~debug) {
-        10.wait;
-    } {
-        (3*60).wait;
-    };
-    // Drums stop, guitar harmony thickens, bass changes to Lydian root
-    ~p3_drumRoutine.stop;
-    ~p3_guitarMelodyActivityLevel = 1;
-    ~p3_bassNote = ~p3_root - 4;
-    // TODO BASS COMES UP
-    ~p3_thickGuitarHarmony = true;
-    // TODO Make this interactive
-    ~p3_guitarMelodyOctave = 2**(2*2).floor;
-    
-    // TODO fade ~p3_amps[\guitar] down to 0
-    // TODO fade ~p3_amps[\varsaw] up to 0.8
-    if(~debug) {
-        10.wait;
-    } {
-        (3*60).wait;
-    };
-
-    ~p3_drumBuild.reset;
-    ~p3_drumRoutine.reset;
-    if(~debug) {
-        10.wait;
-    } {
-        (3*60).wait;
-    };
-
-    ~p3_drumReset.();
     ~p3_drumRoutine.play(~p3_clock, Quant(4));
     ~p3_drumBuild.play;
     // TODO varsaw fade out
@@ -88,7 +70,9 @@ s.waitForBoot {
     ~p3_bassNote = ~p3_root;
     
     {
+
         ~p3_drumRoutine.stop;
+        ~p3_drumWildRoutine.stop
         ~p3_drumWildRoutine.play(~p3_clock, quant:Quant(4));
         ~p3_drumWildControl.play;
     }.fork(~p3_clock, quant:Quant(4));
