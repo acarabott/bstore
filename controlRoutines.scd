@@ -119,8 +119,7 @@
     ~p3_drumVerb.set(\room, ~p3_drumRoomInit);
 };
 
-// ~p3_sectionDuration = 150
-Tdef(\p3_section3Control, {
+~p3_section3Control = Routine {
     var start, middle, end, index, div, inc, mWait;
     index = 0;
     start = ~p3_sectionDuration/10;
@@ -153,10 +152,11 @@ Tdef(\p3_section3Control, {
     "End start".postln;
     
     end.wait;
+    
+    ~p3_guitarVerb.set(\room, ~p3_guitarRoomInit);
+    ~p3_guitarStart.stop;
     "Finished".postln;
     
-});
+};
 
-
-// ~p3_guitarStartActivityLevel = 0.5
-// "Control Routines loaded".postln;
+"Control Routines loaded".postln;

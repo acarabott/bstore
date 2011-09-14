@@ -232,7 +232,7 @@
                             // Play notes using the double function.
                             ~p3_double.(
                                 {|di|
-                                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, item, \pan, [~p3_x, ~p3_y].choose, \amp, ~p3_amps[\drums] * ~p3_amps[(\drum_ ++ ~p3_buffers.findKeyForValue(item)).asSymbol], \rate, rateFunc.(di), \out, ~p3_drumVerbBus, \dur, 0.25, \tail, 0.25])
+                                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, item, \xpos ~p3_data[\lrdiff], \amp, ~p3_amps[\drums] * ~p3_amps[(\drum_ ++ ~p3_buffers.findKeyForValue(item)).asSymbol], \rate, rateFunc.(di), \out, ~p3_drumVerbBus, \dur, 0.25, \tail, 0.25])
                                 },
                                 mult,
                                 div,
@@ -287,31 +287,31 @@
             
                 if(melody[0].notNil) {
                     // TODO Make these pan positions 4 way!
-                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_buffers[\guitar][melody[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\guitar], \rate, 1*~p3_guitarMelodyOctave]);
-                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_buffers[\guitar][melody[0]], \pan, ~p3_x.linlin(0, 1, 1, -1), \amp, ~p3_amps[\guitar], \rate, 0.5*~p3_guitarMelodyOctave]);
+                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_buffers[\guitar][melody[0]], \xpos, ~p3_data[\lrdiff], \ypos, 0 + [~p3_data[\mean], ~p3_data[\mean].neg].choose, \amp, ~p3_amps[\guitar], \rate, 1*~p3_guitarMelodyOctave]);
+                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_buffers[\guitar][melody[0]], ~p3_data[\lrdiff], \amp, ~p3_amps[\guitar], \rate, 0.5*~p3_guitarMelodyOctave]);
             
                     if(~p3_guitarMelodyCount >= 3) {
-                        synths.add([~p3_root  + Scale.minor.degrees.wrapAt(melody[0]), ~p3_x.linlin(0, 1, -1, 1)]);
+                        synths.add([~p3_root  + Scale.minor.degrees.wrapAt(melody[0]), ~p3_data[\lrdiff]]);
                     };
                     if(~p3_guitarMelodyCount >= 7) {
-                        synths.add([~p3_root  + 12 + Scale.minor.degrees.wrapAt(melody[0]), ~p3_x.linlin(0, 1, 1, -1)]);
+                        synths.add([~p3_root  + 12 + Scale.minor.degrees.wrapAt(melody[0]), ~p3_data[\lrdiff].neg]);
                     };
                     if(~p3_thickGuitarHarmony) {
-                        synths.add([~p3_root + Scale.minor.degrees.wrapAt(melody[0]-2), ~p3_x.linlin(0, 1, -1, 1)]);
-                        synths.add([~p3_root + 12 + Scale.minor.degrees.wrapAt(melody[0]-2), ~p3_x.linlin(0, 1, 1, -1)]);
-                        synths.add([~p3_root + 24 + Scale.minor.degrees.wrapAt(melody[0]+2), ~p3_x.linlin(0, 1, -1, 1)]);
+                        synths.add([~p3_root + Scale.minor.degrees.wrapAt(melody[0]-2), ~p3_data[\lrdiff]]);
+                        synths.add([~p3_root + 12 + Scale.minor.degrees.wrapAt(melody[0]-2), ~p3_data[\lrdiff].neg]);
+                        synths.add([~p3_root + 24 + Scale.minor.degrees.wrapAt(melody[0]+2), ~p3_data[\lrdiff]]);
                     };
                 
                     synths.do { |synth|
-                        Synth(\BSP3_VarSaw, [\amp, ~p3_amps[\varsaw]/synths.size, \freq, synth[0].midicps, \out, ~p3_varsawVerbBus, \pan, synth[1]]);
+                        Synth(\BSP3_VarSaw, [\amp, ~p3_amps[\varsaw]/synths.size, \freq, synth[0].midicps, \out, ~p3_varsawVerbBus, \xpos, synth[1], \ypos, (-1, -0.9..1).choose]);
                     };
                     wait = wait + (melody[1]/8);
 
                     (melody[1]/8).wait;
-                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_buffers[\guitar][melody[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\guitar]/2, \rate, 2*~p3_guitarMelodyOctave]);
+                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_buffers[\guitar][melody[0]], \xpos, ~p3_data[\lrdiff], \ypos, 0 + [~p3_data[\mean], ~p3_data[\mean].neg].choose, \amp, ~p3_amps[\guitar]/2, \rate, 2*~p3_guitarMelodyOctave]);
                     wait = wait + (melody[1]/8);
                     (melody[1]/8).wait;
-                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_buffers[\guitar][melody[0]], \pan, ~p3_x.linlin(0, 1, -1, 1), \amp, ~p3_amps[\guitar]/2, \rate, 4*~p3_guitarMelodyOctave]);
+                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_buffers[\guitar][melody[0]], \xpos, ~p3_data[\lrdiff], \ypos, 0 + [~p3_data[\mean], ~p3_data[\mean].neg].choose, \amp, ~p3_amps[\guitar]/2, \rate, 4*~p3_guitarMelodyOctave]);
         
                 };
                 (melody[1] - wait).wait;
@@ -358,7 +358,7 @@
         sectionWait = 60;
     };
     inf.do {|i|
-        var timeNow, runningTime, timeSinceRate, mult, wait, phraseIndex, rate, amp, scale, synthNoteIndex, synthNotes, synthPan;
+        var timeNow, runningTime, timeSinceRate, mult, wait, phraseIndex, rate, amp, scale, synthNoteIndex, synthNotes, synthXpos, synthYpos;
         timeNow = SystemClock.beats;
         runningTime = timeNow - startTime;
         timeSinceRate = timeNow - lastRateTime;
@@ -437,7 +437,9 @@
                 scale = Scale.minor.degrees;
             };
             // TODO this pan interactive
-            synthPan = (-1,-0.9..1).choose;
+            synthXpos = ~p3_data[\lrdiff].neg;
+            synthYpos = 0 + [~p3_data[\mean], ~p3_data[\mean].neg].choose;
+            
             synthNoteIndex = (scale.size-1).rand;
             synthNotes.add(scale[synthNoteIndex]);
 
@@ -452,11 +454,12 @@
                 synthFreq = (~p3_root + synthNote).midicps;
                 
                 if(synthNotesIndex.odd) {
-                    synthPan = synthPan.neg;
+                    synthXpos = synthXpos.neg;
+                    synthYpos = synthYpos.neg;
                 };
 
-                Synth(\BSP3_VarSaw, [\amp, synthAmp, \freq, synthFreq, \out, ~p3_varsawVerbBus, \pan, synthPan, \sus, 1, \rel, 2]);                
-                Synth(\BSP3_VarSaw, [\amp, synthAmp, \freq, synthFreq*2, \out, ~p3_varsawVerbBus, \pan, synthPan, \sus, 1, \rel, 2]);                  
+                Synth(\BSP3_VarSaw, [\amp, synthAmp, \freq, synthFreq, \out, ~p3_varsawVerbBus, \xpos, synthXpos, \ypos, synthYpos\sus, 1, \rel, 2]);                
+                Synth(\BSP3_VarSaw, [\amp, synthAmp, \freq, synthFreq*2, \out, ~p3_varsawVerbBus, \xpos, synthXpos, \ypos, synthYpos\sus, 1, \rel, 2]);                  
             };            
         };
 

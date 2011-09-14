@@ -11,7 +11,6 @@
     ~p3_data[\lrdiff] = ~p3_data[\left].neg + ~p3_data[\right];
     ~p3_data[\tbdiff] = ~p3_data[\top].neg + ~p3_data[\bottom];
     ~p3_data[\mean] = mulAdd.mean;    
-
     ~p3_data[\lowMax] = ~p3_data[\left].min(~p3_data[\right]);
     
     if(~p3_data[\lowMax] < 0.35) {

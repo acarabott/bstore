@@ -26,10 +26,9 @@ s.waitForBoot {
 ~p3_stop.();
 ~p3_setup.();
 
-~p3_section1Control.play
-
-
-~p3_section2Control.play
+~p3_section1Control.play;
+~p3_section2Control.play;
+~p3_section3Control.play;
 
 ~p3_sectionDuration = 150;
 ~p3_bassline.play(~p3_clock, Quant(4));
@@ -44,25 +43,6 @@ s.waitForBoot {
 Tdef(\p3_section3Control).play
 (
 ~p3_control = Routine {
-    ~p3_guitarStart.play(~p3_clock, Quant(4));
-    // TODO have this accumlate activity, once it hits threshold move onto next section
-    // (4 * 60).wait;
-    if(~debug) {
-        10.wait;
-    } {
-        (4 * 60).wait;
-    };
-    // When an activity level reaches 0.75 or so do
-    ~p3_hatsPat = ~p3_hatsPats[\quavers];
-    // (2 * 60).wait;
-    if(~debug) {
-        10.wait;
-    } {
-        (2*60).wait;
-    };
-    ~p3_guitarStart.stop;
-    
-    // Guitar melodies start
     ~p3_guitarMelodyActivityLevel = 0.2;
     ~p3_guitarMelody.play(~p3_clock, Quant(4));
     // as this acumulates and hits 0.75 then do 
