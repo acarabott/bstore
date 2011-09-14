@@ -16,6 +16,7 @@
 	* Basic drums
 	* Guitar down
 ## 5
+    * Bass fades in
 	* Drums Wild
 ## 6
 	* Guitar Wild

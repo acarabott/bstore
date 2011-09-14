@@ -29,8 +29,9 @@ s.waitForBoot {
 ~p3_section1Control.play;
 ~p3_section2Control.play;
 ~p3_section3Control.play;
+~p3_section4Control.play;
 
-~p3_sectionDuration = 150;
+~p3_sectionDuration = 300;
 ~p3_bassline.play(~p3_clock, Quant(4));
 ~p3_drumRoutine.play(~p3_clock, Quant(4));
 ~p3_hatsOn = true;
@@ -40,7 +41,7 @@ s.waitForBoot {
 ~p3_kickPat    = ~p3_kickPats[\main];
 ~p3_kickOn = true;
 ~p3_snareOn = true;
-Tdef(\p3_section4Control).stop
+
 
 (
 	(-4..4).do { |val|

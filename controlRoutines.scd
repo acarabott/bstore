@@ -160,8 +160,8 @@
     
 };
 
-Tdef(\p3_section4Control, {
-    var start, middle, end, index, div, inc, mWait;
+~p3_section4Control = Routine {
+    var start, middle, end, index, div, inc, mWait, eWait;
     index = 0;
     start = ~p3_sectionDuration/10;
     end = ~p3_sectionDuration/5;
@@ -169,7 +169,7 @@ Tdef(\p3_section4Control, {
     div = 100;
     inc = 1/div;
     mWait = middle/div;
-
+    eWait = (end/2)/div;
     "Section started".postln;
     ~p3_kickOn = false;
     ~p3_snareOn = false;
@@ -187,9 +187,8 @@ Tdef(\p3_section4Control, {
         ~p3_guitarMelodyActivityThresh = index.linlin(0, 1, 0.8, 0.1);
         ~p3_guitarVerb.set(\room, index.linlin(0, 0.5, ~p3_guitarRoomInit = 0.8, 1), \mix, index.linlin(0, 0.5, ~p3_guitarMixInit, 1), \damp, index.linlin(0, 0.5, ~p3_guitarDampInit, 0.1));
         
-        ~p3_varsawMad = index.linlin(0, 1, 1, 4);
-        
-        if(index > 0.66) {
+        ~p3_varsawMad = index.lincurve(0, 1, 1, 4, -2)
+        if(index > 0.5) {
             if(~p3_thickGuitarHarmony.not) {
                 "Thick Harmony starts".postln;
                 ~p3_thickGuitarHarmony = true;
@@ -200,7 +199,6 @@ Tdef(\p3_section4Control, {
                 ~p3_sliders[\drum_hats].valueAction_(index.linlin(0.66, 1, 1, 0));
                 ~p3_sliders[\bass].valueAction_(index.linlin(0.66, 1, 1, 0));
                 ~p3_sliders[\varsaw].valueAction_(index.linlin(0.66, 1, 1, 1.5));
-                ~p3_sliders[\varsaw].valueAction_(1.5);
             }.fork(AppClock);
         };
         
@@ -209,10 +207,25 @@ Tdef(\p3_section4Control, {
     });
     
     "Reached end stage".postln;
-    end.wait;
     
+    (end/2).wait;
+    index = 0;
+    ~p3_bassNote = 50;
+    while({index < 1}, {
+        index.postln;
+        ~p3_varsawMad = index.linlin(0, 1, 4, 0);
+        {
+            ~p3_sliders[\bass].valueAction_(index);
+            ~p3_sliders[\varsaw].valueAction_(index.linlin(0.66, 1, 1, 1.5));
+            ~p3_sliders[\varsaw].valueAction_(index.linlin(0, 1, 1.5, 0));
+        }.fork(AppClock);
+        
+        index = index + inc;
+        eWait.wait;
+    });
+    ~p3_guitarMelody.stop;
     // Remove var saw?
     "Finished".postln;
-});
-// Tdef(\section4Control).stop
+};
+
 "Control Routines loaded".postln;
