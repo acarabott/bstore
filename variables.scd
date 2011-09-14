@@ -71,9 +71,13 @@
 
 ~p3_drumRoomInit = 0.2;
 ~p3_guitarRoomInit = 0.8;
+~p3_guitarMixInit = 0.6;
+~p3_guitarDampInit = 0.3;
 ~p3_varsawRoomInit = 1;
 ~p3_bassRoomInit = 0.5;
 ~p3_bassMixInit = 0.5;
+
+~p3_varsawMad = 0;
 
 ~p3_drumPanMoving = false;
 ~p3_drumActivityChanging = false;
@@ -106,7 +110,7 @@
 ~p3_thickGuitarHarmony = false;
 ~p3_guitarMelodyOctave = 1;
 ~p3_guitarStartActivityLevel = 0.1;
-~p3_guitarMelodyActivityLevel = 0;
+~p3_guitarMelodyActivityThresh = 0.8;
 ~p3_guitarMelodyCount = 0;
 ~p3_guitarInteractiveActivityLevel = 0.3;
 

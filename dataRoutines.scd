@@ -1,7 +1,6 @@
 c = Condition(false);
 r = Routine {
     var dirs = true!4;
-    var keys = [\1, \2, \3, \4];
     var inc = 0.01;
     inf.do {
         c.wait;
@@ -31,12 +30,27 @@ r = Routine {
     }
 };
 
-~rmax = 1;
+~random = Routine {
+    inf.do {
+        if(~p3_testMove) {
+            ~p3_testData.do { |item, i|
+                if(0.25.coin) {
+                    ~p3_testData[i] = 1.0.rand;
+                };
+            };
+        };
+        ~p3_netAddr.sendMsg("/activity", ~p3_testData[0], ~p3_testData[1], ~p3_testData[2], ~p3_testData[3]);
+        ~rate.wait;
+    };
+}
 
+~random.play
+~rate = 1/24;
+~rmax = 1;
+~p3_testData = [0,0,0,0];
+~p3_testMove = true;
 r.play;
 r.stop
 c.test = false; c.signal;
 c.test = true; c.signal;
 
-~p3_testData = [0.1,0.4,0.5,0];
-~p3_testMove = true

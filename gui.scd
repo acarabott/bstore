@@ -6,7 +6,7 @@
 ~p3_mixerTop.addFlowLayout;
 ~p3_mixerBot = CompositeView(~p3_mixer, ~p3_mixerCompBounds);
 ~p3_mixerBot.addFlowLayout;
-~p3_sliders = List[];
+~p3_sliders = Dictionary[];
 ~p3_amps.asSortedArray.do { |item|
     var split = item[0].asString.split($_);
     var view, width;
@@ -20,7 +20,7 @@
     } {
         view = ~p3_mixerTop;        
     };
-    ~p3_sliders.add(EZSlider(
+    ~p3_sliders.add(item[0] -> EZSlider(
         view, 
         width@(~p3_mixer.bounds.height*0.45), 
         item[0].asString.split($_).last, 
@@ -32,7 +32,7 @@
         layout:\vert
         )
     );
-    ~p3_sliders.last.labelView.align_(\center);
+    ~p3_sliders[item[0]].labelView.align_(\center);
 };    
 
 // Activity Window
@@ -54,13 +54,14 @@
 });
 
 ~p3_activityMulComp = CompositeView(~p3_activityWin, Rect(400, 0, 200, 400));
+
 ~p3_activityMulComp.addFlowLayout;
 [\1, \2, \3, \4, \master].do { |item, i|
     var slider = EZSlider(
         ~p3_activityMulComp, 
         35@175, 
         item.asString, 
-        ControlSpec(1, 4, \lin, 0.01, 1, "mult"),
+        ControlSpec(0.1, 4, \lin, 0.01, 1, "mult"),
         {|ez| ~p3_dataMul[item] = ez.value},
         1,
         layout:\vert

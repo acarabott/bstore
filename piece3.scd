@@ -36,11 +36,19 @@ s.waitForBoot {
 ~p3_hatsOn = true;
 ~p3_drumActivityChanging = false;
 ~p3_snarePat    = ~p3_snarePats[\main];
-~p3_hatsPat     = ~p3_hatsPats[\offbeat];
+~p3_hatsPat     = ~p3_hatsPats[\main];
 ~p3_kickPat    = ~p3_kickPats[\main];
 ~p3_kickOn = true;
 ~p3_snareOn = true;
-Tdef(\p3_section3Control).play
+Tdef(\p3_section4Control).stop
+
+(
+	(-4..4).do { |val|
+		(-1,-0.9).collect(_.lincurve(0, 100, 0, 1, val)).plot
+	}
+	)
+
+(-0.2).lincurve(-1, 1, -1, 1, 2)
 (
 ~p3_control = Routine {
     ~p3_guitarMelodyActivityLevel = 0.2;
@@ -114,3 +122,4 @@ Tdef(\p3_section3Control).play
 // TODO Mixing 
 // TODO Have scale controls for activity levels.
 // TODO Make rate and fgain interactive on varsaw?
+// TODO varsaw overall level might need to come up?

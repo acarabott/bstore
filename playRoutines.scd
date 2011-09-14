@@ -274,9 +274,13 @@
 };
 
 ~p3_guitarMelody = Routine {
+    var playedRecently = false;
+    var firstIn = false;
+    var secondIn = false;
+    var thickIn = false;
     inf.do {|i|
         var melody;
-        if(~p3_guitarMelodyActivityLevel.coin) {
+        if(~p3_data[\lowMax] > ~p3_guitarMelodyActivityThresh) {
             "play".postln;
             melody = ~p3_guitarMelodies.choose;
             melody.do { |melody, j|
@@ -288,22 +292,31 @@
                     Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_buffers[\guitar][melody[0]], \xpos, ~p3_data[\lrdiff], \ypos, [-1, -0.5, 0, 0.5, 1].choose, \amp, ~p3_amps[\guitar], \rate, 0.5*~p3_guitarMelodyOctave]);
             
                     if(~p3_guitarMelodyCount >= 3) {
-                        "first synth joins".postln;
+                        if(firstIn.not) {
+                            firstIn = true;
+                            "first synth joins".postln;
+                        };
                         synths.add([~p3_root  + Scale.minor.degrees.wrapAt(melody[0]), ~p3_data[\lrdiff]]);
                     };
                     if(~p3_guitarMelodyCount >= 7) {
-                        "second synth joins".postln;
+                        if(secondIn.not) {
+                            secondIn = true;
+                            "second synth joins".postln;
+                        };
                         synths.add([~p3_root  + 12 + Scale.minor.degrees.wrapAt(melody[0]), ~p3_data[\lrdiff].neg]);
                     };
                     if(~p3_thickGuitarHarmony) {
-                        "bare synths joins".postln;
+                        if(thickIn.not) {
+                            thickIn = true;
+                            "bare synths joins".postln;
+                        };
                         synths.add([~p3_root + Scale.minor.degrees.wrapAt(melody[0]-2), ~p3_data[\lrdiff]]);
                         synths.add([~p3_root + 12 + Scale.minor.degrees.wrapAt(melody[0]-2), ~p3_data[\lrdiff].neg]);
                         synths.add([~p3_root + 24 + Scale.minor.degrees.wrapAt(melody[0]+2), ~p3_data[\lrdiff]]);
                     };
                 
                     synths.do { |synth|
-                        Synth(\BSP3_VarSaw, [\amp, ~p3_amps[\varsaw]/synths.size, \freq, synth[0].midicps, \out, ~p3_varsawVerbBus, \xpos, synth[1], \ypos, (-1, -0.9..1).choose]);
+                        Synth(\BSP3_VarSaw, [\amp, ~p3_amps[\varsaw]/synths.size, \freq, synth[0].midicps, \out, ~p3_varsawVerbBus, \xpos, synth[1], \ypos, (-1, -0.9..1).choose, \madgain, ~p3_data[\lowMax].linlin(0, 1, 0, ~p3_varsawMad)]);
                     };
                     wait = wait + (melody[1]/8);
 
@@ -317,8 +330,14 @@
                 (melody[1] - wait).wait;
             };
             ~p3_guitarMelodyCount = ~p3_guitarMelodyCount + 1;
+            playedRecently = true;
         } {
-            8.wait;
+            if(playedRecently) {
+                playedRecently = false;
+                8.wait;
+            } {
+                0.5.wait;
+            };
         };
     
     }

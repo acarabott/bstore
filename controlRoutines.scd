@@ -20,13 +20,14 @@
     ~p3_bassMove = true;
     "moving".postln;
     while({index < 1}, {
-        index = index + inc;
         ~p3_bassHigh = ~p3_bassHigh + inc;
         ~p3_bassThresh = ~p3_bassThresh - inc;
         ~p3_bassVerb.set(\room, ~p3_bassHigh.linlin(0, 1, 0.6, 1), \mix, ~p3_bassHigh.linlin(0, 1, 0.5, 0.9));
-        if(index > 0.8) {
+        if(index > 0.8 && ~p3_bassEnd.not) {
             ~p3_bassEnd = true;
+            "Bass near end".postln;
         };
+        index = index + inc;
         index.postln;
         mWait.wait;
     });
@@ -84,7 +85,6 @@
     ~p3_drumActivityChanging = true;
     
     while({index < 1}, {
-        index = index + inc;
         index.postln;
         ~p3_amps[\drums] = ~p3_data[\lowMax].linlin(0, 1, index.linlin(0, 1, 1, 1.5), 1);
         ~p3_drumVerb.set(\room, ~p3_data[\lowMax].linlin(0, 0.8, index.linlin(0, 1, 0.2, 1), 0.9));
@@ -106,6 +106,7 @@
             };
         });
         
+        index = index + inc;
         mWait.wait
     });
     "end".postln;
@@ -137,7 +138,6 @@
 
     "Middle start".postln;
     while({index < 1}, {
-        index = index + inc;
         index.postln;
         ~p3_guitarStartActivityLevel = index.linlin(0, 1, 0.05, 1);
         ~p3_guitarVerb.set(\room, ~p3_data[\lowMax].linlin(0, 0.8, index.linlin(0, 1, 0.8, 1), 0.9));
@@ -147,7 +147,8 @@
             "Second guitar join".postln;
         };
         
-        (middle/div).wait
+        index = index + inc;
+        mWait.wait
     });
     "End start".postln;
     
@@ -158,17 +159,60 @@
     "Finished".postln;
     
 };
-    ~p3_guitarMelody.stop
-Tdef(\section4Control, {
-    ~p3_guitarMelody.play(~p3_clock, Quant(4));
+
+Tdef(\p3_section4Control, {
+    var start, middle, end, index, div, inc, mWait;
+    index = 0;
+    start = ~p3_sectionDuration/10;
+    end = ~p3_sectionDuration/5;
+    middle = ~p3_sectionDuration - start - end;
+    div = 100;
+    inc = 1/div;
+    mWait = middle/div;
+
+    "Section started".postln;
     ~p3_kickOn = false;
     ~p3_snareOn = false;
-    ~p3_guitarMelodyActivityLevel = 0.7;
+    ~p3_hatsOn = true;
+    ~p3_hatsPat = ~p3_hatsPats[\offbeat];
     ~p3_bassNote = 58;
-    ~p3_thickGuitarHarmony = true;
-    ~p3_guitarVerb.set(\room, 1, \mix, 1);
-    ~p3_amps[\drum_hats]=0;
-    ~p3_amps[\guitar] = 0;
+    (start/2).wait;
+    "Guitar enters".postln;
+    ~p3_guitarMelody.play(~p3_clock, Quant(4));
+    (start/2).wait;
+    
+    while({index < 1}, {
+        index.postln;
+        
+        ~p3_guitarMelodyActivityThresh = index.linlin(0, 1, 0.8, 0.1);
+        ~p3_guitarVerb.set(\room, index.linlin(0, 0.5, ~p3_guitarRoomInit = 0.8, 1), \mix, index.linlin(0, 0.5, ~p3_guitarMixInit, 1), \damp, index.linlin(0, 0.5, ~p3_guitarDampInit, 0.1));
+        
+        ~p3_varsawMad = index.linlin(0, 1, 1, 4);
+        
+        if(index > 0.66) {
+            if(~p3_thickGuitarHarmony.not) {
+                "Thick Harmony starts".postln;
+                ~p3_thickGuitarHarmony = true;
+            };
+            // Guitar hats and bass turn down
+            {
+                ~p3_sliders[\guitar].valueAction_(index.linlin(0.66, 1, 1, 0));
+                ~p3_sliders[\drum_hats].valueAction_(index.linlin(0.66, 1, 1, 0));
+                ~p3_sliders[\bass].valueAction_(index.linlin(0.66, 1, 1, 0));
+                ~p3_sliders[\varsaw].valueAction_(index.linlin(0.66, 1, 1, 1.5));
+                ~p3_sliders[\varsaw].valueAction_(1.5);
+            }.fork(AppClock);
+        };
+        
+        index = index + inc;
+        mWait.wait;
+    });
+    
+    "Reached end stage".postln;
+    end.wait;
+    
+    // Remove var saw?
+    "Finished".postln;
 });
-Tdef(\section4Control).stop
+// Tdef(\section4Control).stop
 "Control Routines loaded".postln;
