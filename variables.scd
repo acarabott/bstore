@@ -6,7 +6,7 @@
 ~p3_amps.add(\bass -> 1);
 ~p3_amps.add(\bassHigh -> 1);
 ~p3_amps.add(\guitar -> 1);
-~p3_amps.add(\varsaw -> 0.4);
+~p3_amps.add(\varsaw -> 1);
 ~p3_amps.add(\drums -> 1);
 ~p3_amps.add(\drum_kick -> 1);
 ~p3_amps.add(\drum_snare -> 1);

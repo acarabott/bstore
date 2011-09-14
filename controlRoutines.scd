@@ -158,5 +158,17 @@
     "Finished".postln;
     
 };
-
+    ~p3_guitarMelody.stop
+Tdef(\section4Control, {
+    ~p3_guitarMelody.play(~p3_clock, Quant(4));
+    ~p3_kickOn = false;
+    ~p3_snareOn = false;
+    ~p3_guitarMelodyActivityLevel = 0.7;
+    ~p3_bassNote = 58;
+    ~p3_thickGuitarHarmony = true;
+    ~p3_guitarVerb.set(\room, 1, \mix, 1);
+    ~p3_amps[\drum_hats]=0;
+    ~p3_amps[\guitar] = 0;
+});
+Tdef(\section4Control).stop
 "Control Routines loaded".postln;

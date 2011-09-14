@@ -19,14 +19,6 @@ SynthDef(\BSP3_Sampler) { |out=0, buf=0, amp=0.5, pan=0, rate=1, dur=8, tail=1, 
     );
 }.add;
 
-SynthDef(\BSP3_Mouse) { |out=0, rate=10|
-    var imp = Impulse.kr(rate);
-    var x = MouseX.kr(0, 1, 0, 0);
-    var y = MouseY.kr(1, 0, 0, 0);
-
-    SendReply.kr(imp, \xy, [x, y]);
-}.add;
-
 SynthDef(\BSP3_Reverb) { |in=0, out=0, mix=0.5, room=0.8, damp=0.4|
     var sig = In.ar(in, 4);
     var verbFront   = FreeVerb2.ar(sig[0], sig[1], mix, room, damp);
@@ -45,15 +37,13 @@ SynthDef(\BSP3_Reverb) { |in=0, out=0, mix=0.5, room=0.8, damp=0.4|
     );
 }.add;    
 
-// TODO Make rate and fgain interactive
-// TODO replace mousey with interactive
-SynthDef(\BSP3_VarSaw) { |out=0, freq=440, amp=0.25, pan=0, att=0.2, sus=0.75, rel=1, rate=0.5, fgain=2, xpos=0, ypos=0|
+SynthDef(\BSP3_VarSaw) { |out=0, freq=440, amp=0.25, pan=0, att=0.2, sus=0.75, rel=1, rate=0.5, fgain=2, xpos=0, ypos=0, madgain=0|
     var sig = Mix.new(VarSaw.ar(freq * [0.5,1,2], 0, LFNoise1.kr(0.3,0.1,0.1), 0.1));
     var line = Line.kr(8000, 1000, 1);
     var lpf = LPF.ar(sig, line);
     var moog = MoogFF.ar(lpf, SinOsc.kr(rate).range(400,10000), fgain);
     var env = EnvGen.ar(Env.linen(att, sus, rel, amp, 'sine'), doneAction: 2);
-    var madmoog = MoogFF.ar(lpf, line, MouseY.kr(4, 0)).range(-0.1, 0.1);
+    var madmoog = MoogFF.ar(lpf, line, madgain).range(-0.1, 0.1);
     var final = Mix.ar([moog, madmoog]);
     
     Out.ar(out,

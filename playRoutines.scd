@@ -232,7 +232,7 @@
                             // Play notes using the double function.
                             ~p3_double.(
                                 {|di|
-                                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, item, \xpos ~p3_data[\lrdiff], \amp, ~p3_amps[\drums] * ~p3_amps[(\drum_ ++ ~p3_buffers.findKeyForValue(item)).asSymbol], \rate, rateFunc.(di), \out, ~p3_drumVerbBus, \dur, 0.25, \tail, 0.25])
+                                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, item, \xpos, ~p3_data[\lrdiff], \amp, ~p3_amps[\drums] * ~p3_amps[(\drum_ ++ ~p3_buffers.findKeyForValue(item)).asSymbol], \rate, rateFunc.(di), \out, ~p3_drumVerbBus, \dur, 0.25, \tail, 0.25])
                                 },
                                 mult,
                                 div,
@@ -276,27 +276,27 @@
 ~p3_guitarMelody = Routine {
     inf.do {|i|
         var melody;
-        i.postln;
-        // TODO Make this cumulative activity level
         if(~p3_guitarMelodyActivityLevel.coin) {
-            "play!".postln;
+            "play".postln;
             melody = ~p3_guitarMelodies.choose;
             melody.do { |melody, j|
                 var wait = 0;
                 var synths = List[];
             
                 if(melody[0].notNil) {
-                    // TODO Make these pan positions 4 way!
-                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_buffers[\guitar][melody[0]], \xpos, ~p3_data[\lrdiff], \ypos, 0 + [~p3_data[\mean], ~p3_data[\mean].neg].choose, \amp, ~p3_amps[\guitar], \rate, 1*~p3_guitarMelodyOctave]);
-                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_buffers[\guitar][melody[0]], ~p3_data[\lrdiff], \amp, ~p3_amps[\guitar], \rate, 0.5*~p3_guitarMelodyOctave]);
+                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_buffers[\guitar][melody[0]], \xpos, ~p3_data[\lrdiff], \ypos, [-1, -0.5, 0, 0.5, 1].choose, \amp, ~p3_amps[\guitar], \rate, 1*~p3_guitarMelodyOctave]);
+                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_buffers[\guitar][melody[0]], \xpos, ~p3_data[\lrdiff], \ypos, [-1, -0.5, 0, 0.5, 1].choose, \amp, ~p3_amps[\guitar], \rate, 0.5*~p3_guitarMelodyOctave]);
             
                     if(~p3_guitarMelodyCount >= 3) {
+                        "first synth joins".postln;
                         synths.add([~p3_root  + Scale.minor.degrees.wrapAt(melody[0]), ~p3_data[\lrdiff]]);
                     };
                     if(~p3_guitarMelodyCount >= 7) {
+                        "second synth joins".postln;
                         synths.add([~p3_root  + 12 + Scale.minor.degrees.wrapAt(melody[0]), ~p3_data[\lrdiff].neg]);
                     };
                     if(~p3_thickGuitarHarmony) {
+                        "bare synths joins".postln;
                         synths.add([~p3_root + Scale.minor.degrees.wrapAt(melody[0]-2), ~p3_data[\lrdiff]]);
                         synths.add([~p3_root + 12 + Scale.minor.degrees.wrapAt(melody[0]-2), ~p3_data[\lrdiff].neg]);
                         synths.add([~p3_root + 24 + Scale.minor.degrees.wrapAt(melody[0]+2), ~p3_data[\lrdiff]]);
@@ -308,17 +308,16 @@
                     wait = wait + (melody[1]/8);
 
                     (melody[1]/8).wait;
-                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_buffers[\guitar][melody[0]], \xpos, ~p3_data[\lrdiff], \ypos, 0 + [~p3_data[\mean], ~p3_data[\mean].neg].choose, \amp, ~p3_amps[\guitar]/2, \rate, 2*~p3_guitarMelodyOctave]);
+                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_buffers[\guitar][melody[0]], \xpos, ~p3_data[\lrdiff], \ypos, [-1, -0.5, 0, 0.5, 1].choose, \amp, ~p3_amps[\guitar]/2, \rate, 2*~p3_guitarMelodyOctave]);
                     wait = wait + (melody[1]/8);
                     (melody[1]/8).wait;
-                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_buffers[\guitar][melody[0]], \xpos, ~p3_data[\lrdiff], \ypos, 0 + [~p3_data[\mean], ~p3_data[\mean].neg].choose, \amp, ~p3_amps[\guitar]/2, \rate, 4*~p3_guitarMelodyOctave]);
+                    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, ~p3_buffers[\guitar][melody[0]], \xpos, ~p3_data[\lrdiff], \ypos, [-1, -0.5, 0, 0.5, 1].choose, \amp, ~p3_amps[\guitar]/2, \rate, 4*~p3_guitarMelodyOctave]);
         
                 };
                 (melody[1] - wait).wait;
             };
             ~p3_guitarMelodyCount = ~p3_guitarMelodyCount + 1;
         } {
-            "no play".postln;
             8.wait;
         };
     
@@ -458,8 +457,8 @@
                     synthYpos = synthYpos.neg;
                 };
 
-                Synth(\BSP3_VarSaw, [\amp, synthAmp, \freq, synthFreq, \out, ~p3_varsawVerbBus, \xpos, synthXpos, \ypos, synthYpos\sus, 1, \rel, 2]);                
-                Synth(\BSP3_VarSaw, [\amp, synthAmp, \freq, synthFreq*2, \out, ~p3_varsawVerbBus, \xpos, synthXpos, \ypos, synthYpos\sus, 1, \rel, 2]);                  
+                Synth(\BSP3_VarSaw, [\amp, synthAmp, \freq, synthFreq, \out, ~p3_varsawVerbBus, \xpos, synthXpos, \ypos, synthYpos, \sus, 1, \rel, 2]);                
+                Synth(\BSP3_VarSaw, [\amp, synthAmp, \freq, synthFreq*2, \out, ~p3_varsawVerbBus, \xpos, synthXpos, \ypos, synthYpos, \sus, 1, \rel, 2]);                  
             };            
         };
 

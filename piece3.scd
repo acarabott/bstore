@@ -110,15 +110,7 @@ Tdef(\p3_section3Control).play
 );
 
 // TODO deal with all ~p3_varsawVerbRoutine ~p3_guitarVerbRoutine ~p3_drumVerbRoutine
-// TODO Capture melodic patterns
-// TODO Guitar activity control
-// TODO Guitar effects
-// TODO Larger scale decisions - play / don't play for x time
-// TODO Large pads every now and then
-// TODO Changing from sets of drum patterns
-// TODO Write possible structures for piece
-// TODO Root note changes.
 // TODO Guitar phrases of different no.
 // TODO Mixing 
 // TODO Have scale controls for activity levels.
-// TODO Front and back fx
+// TODO Make rate and fgain interactive on varsaw?
