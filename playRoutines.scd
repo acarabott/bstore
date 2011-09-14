@@ -253,8 +253,17 @@
 // Guitar
 ~p3_guitarStart = Routine {
     inf.do {|i|
-        if(~p3_guitarResolved.not && (~p3_guitarStartActivityLevel).coin) {
-            ~p3_guitarNote.();
+        var mult = 1;
+        var notes = 1;
+        if(~p3_guitarResolved.not && (~p3_data[\lowMax].linlin(0, 1, 0.05, ~p3_guitarStartActivityLevel)).coin) {
+            mult = ~p3_data[\lowMax].lincurve(0, 1, 1, ~p3_guitarStartMult, -2).floor;
+            
+            if(mult == 1 && ~p3_guitarStartTwo) {
+                notes = 2;
+            };
+            notes.do { |i|
+                ~p3_double.({|i| ~p3_guitarNote.(i, 2**i, 1/(i+1))}, mult, mult, 0.5);                
+            };
         } {
             if(0.5.coin) {
                 ~p3_guitarResolved = false;
@@ -412,7 +421,7 @@
                 // "rate: ".post; (rate).postln;
                 // "amp: ".post; (amp).postln;
             };
-            ~p3_double.({|i| ~p3_guitarNote.(rate, amp)}, mult, mult, wait);
+            ~p3_double.({|i| ~p3_guitarNote.(i, rate, amp)}, mult, mult, wait);
 
         };
 

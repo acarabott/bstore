@@ -2,6 +2,7 @@
 ~debug = false;
 
 s.options.memSize = 2**18;
+s.latency = 0.4;
 ~p3_path = "/Users/arthurc/Documents/programming/computerMusic/bstore/";
 s.waitForBoot {
     ~p3_setup = {
@@ -26,12 +27,22 @@ s.waitForBoot {
 ~p3_setup.();
 
 ~p3_section1Control.play
-~p3_bassline.play(~p3_clock, Quant(4));
-~p3_sectionDuration = 150
+
+
 ~p3_section2Control.play
 
+~p3_sectionDuration = 150;
+~p3_bassline.play(~p3_clock, Quant(4));
+~p3_drumRoutine.play(~p3_clock, Quant(4));
+~p3_hatsOn = true;
+~p3_drumActivityChanging = false;
+~p3_snarePat    = ~p3_snarePats[\main];
+~p3_hatsPat     = ~p3_hatsPats[\offbeat];
+~p3_kickPat    = ~p3_kickPats[\main];
+~p3_kickOn = true;
+~p3_snareOn = true;
+Tdef(\p3_section3Control).play
 (
-    
 ~p3_control = Routine {
     ~p3_guitarStart.play(~p3_clock, Quant(4));
     // TODO have this accumlate activity, once it hits threshold move onto next section

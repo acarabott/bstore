@@ -101,7 +101,7 @@
     {
         mult.do { |i|
             func.(i);
-            (wait / (div)).wait;
+            (wait / div).wait;
         };
     }.fork(~p3_clock)
 };
@@ -126,8 +126,9 @@
     collection;
 };
 
-~p3_guitarNote = {|rate=1, amp=1|
+~p3_guitarNote = {|index=0, rate=1, amp=1|
     var buffer, weights, nearest, sResolvers, neighbours;
+    
     ~p3_guitarResolved = false;
     switch (~p3_guitarNoteCount)
         {1}  {
@@ -170,7 +171,7 @@
     if(~p3_guitarNoteCount == 4) {
         ~p3_lastStarter = ~p3_lastGuitar;
     };
-    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, buffer, \pan, ~p3_y.linlin(0, 1, -1, 1), \amp, ~p3_amps[\guitar] * amp, \rate, 1*rate]);
+    Synth.before(~p3_guitarVerb, \BSP3_Sampler, [\out, ~p3_guitarVerbBus, \buf, buffer, \amp, ~p3_amps[\guitar] * amp, \rate, (1*rate), \xpos, (-1,-0.9..1).choose, \ypos, (-1,-0.9..1).choose]);
 };  
 
 "Functions loaded".postln;

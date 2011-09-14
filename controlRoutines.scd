@@ -1,5 +1,5 @@
 ~p3_section1Control = Routine {
-    var start, end, middle, index, div, inc;
+    var start, end, middle, index, div, inc, mWait;
 
     ~p3_bassMove = false;
     ~p3_bassEnd = true;
@@ -13,7 +13,8 @@
     middle - ~p3_sectionDuration - start - end;
     div = 100;
     inc = 1/div;
-
+    mWait = middle/div;
+    
     ~p3_bassline.play(~p3_clock, Quant(4));
     start.wait;
     ~p3_bassMove = true;
@@ -27,7 +28,7 @@
             ~p3_bassEnd = true;
         };
         index.postln;
-        (middle / div).wait;
+        mWait.wait;
     });
     "at end".postln;
     end.wait;
@@ -38,17 +39,17 @@
     "finished".postln;
 };
 
-"Control Routines loaded".postln;
 
 ~p3_section2Control = Routine {
-    var start, middle, end, index, div, inc;
+    var start, middle, end, index, div, inc, mWait;
     index = 0;
     start = ~p3_sectionDuration/5;
     end = ~p3_sectionDuration/5;
     middle = ~p3_sectionDuration - start - end;
     div = 100;
     inc = 1/div;
-
+    mWait = middle/div;
+    
     ~p3_kickOn = false;
     ~p3_snareOn = false;
     ~p3_hatsOn = true;
@@ -105,7 +106,7 @@
             };
         });
         
-        (middle/div).wait
+        mWait.wait
     });
     "end".postln;
     
@@ -117,3 +118,45 @@
     ~p3_kickPat    = ~p3_kickPats[\main];
     ~p3_drumVerb.set(\room, ~p3_drumRoomInit);
 };
+
+// ~p3_sectionDuration = 150
+Tdef(\p3_section3Control, {
+    var start, middle, end, index, div, inc, mWait;
+    index = 0;
+    start = ~p3_sectionDuration/10;
+    end = ~p3_sectionDuration/5;
+    middle = ~p3_sectionDuration - start - end;
+    div = 100;
+    inc = 1/div;
+    mWait = middle/div;
+    
+    "Started".postln;
+    (start/2).wait;
+    "Guitar begins".postln;
+    ~p3_guitarStart.play(~p3_clock, Quant(4));
+    (start/2).wait;
+
+    "Middle start".postln;
+    while({index < 1}, {
+        index = index + inc;
+        index.postln;
+        ~p3_guitarStartActivityLevel = index.linlin(0, 1, 0.05, 1);
+        ~p3_guitarVerb.set(\room, ~p3_data[\lowMax].linlin(0, 0.8, index.linlin(0, 1, 0.8, 1), 0.9));
+        ~p3_guitarStartMult = index.linlin(0, 1, 1, 4).ceil;
+        if(index >= 0.33 && ~p3_guitarStartTwo.not) {
+            ~p3_guitarStartTwo = true;
+            "Second guitar join".postln;
+        };
+        
+        (middle/div).wait
+    });
+    "End start".postln;
+    
+    end.wait;
+    "Finished".postln;
+    
+});
+
+
+// ~p3_guitarStartActivityLevel = 0.5
+// "Control Routines loaded".postln;

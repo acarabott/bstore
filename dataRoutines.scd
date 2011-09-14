@@ -39,3 +39,4 @@ c.test = false; c.signal;
 c.test = true; c.signal;
 
 ~p3_testData = [0.1,0.4,0.5,0];
+~p3_testMove = true

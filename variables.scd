@@ -81,6 +81,8 @@
 
 ~p3_guitarRetrig = 0.3;
 ~p3_guitarResolved = false;
+~p3_guitarStartMult = 1;
+~p3_guitarStartTwo = false;
 
 ~p3_lastGuitar = nil;
 ~p3_lastStarter = nil;
@@ -103,7 +105,7 @@
 
 ~p3_thickGuitarHarmony = false;
 ~p3_guitarMelodyOctave = 1;
-~p3_guitarStartActivityLevel = 1/16;
+~p3_guitarStartActivityLevel = 0.1;
 ~p3_guitarMelodyActivityLevel = 0;
 ~p3_guitarMelodyCount = 0;
 ~p3_guitarInteractiveActivityLevel = 0.3;
