@@ -155,7 +155,7 @@
 
         ~p3_drumWildPats.keysValuesDo { |key, value|
             var item, rate, rateFunc, mult, div;
-            rate = rateSig[~p3_y.linlin(0, 1, 0, rateSig.size-1).floor.asInteger];
+            rate = rateSig[~p3_data[\lowMax].linlin(0, 1, 0, rateSig.size-1).floor.asInteger];
             // If not '\all' then it's an actual drum pattern
             if(key != \all) {
                 if(~p3_drumWildPats[\all]) {
@@ -174,12 +174,12 @@
                     // If the previous beat was to take up twice it's normal duration
                     if(playNext) {
                         // Whether or not to play a note
-                        if(~p3_x.max(~p3_drumWildPlayNoteMin).coin) {
+                        if(~p3_data[\lowMax].max(~p3_drumWildPlayNoteMin).coin) {
                             item = drumBufs.wchoose([1, 2, 4].normalizeSum);
 
                             // Whether or not to play more than one note
-                            if(~p3_x.linlin(0, 1, ~p3_drumWildMultMin, ~p3_drumWildMultMax).coin) {
-                                subMultArray = multArray[0..~p3_x.linlin(0.25, 1, 0, multArray.size).floor.asInteger];
+                            if(~p3_data[\lowMax].linlin(0, 1, ~p3_drumWildMultMin, ~p3_drumWildMultMax).coin) {
+                                subMultArray = multArray[0..~p3_data[\lowMax].linlin(0.25, 1, 0, multArray.size).floor.asInteger];
                                 mult = subMultArray.wchoose(Array.series(subMultArray.size, 10, -2).normalizeSum);
                                 if(0.25.coin) {
                                     div = [2, 4, 8].wchoose([2,2,1].normalizeSum);

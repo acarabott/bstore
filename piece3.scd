@@ -110,7 +110,6 @@ Tdef(\p3_section3Control).play
 );
 
 // TODO deal with all ~p3_varsawVerbRoutine ~p3_guitarVerbRoutine ~p3_drumVerbRoutine
-// TODO deal withi all ~p3_x and ~p3_y 
 // TODO Capture melodic patterns
 // TODO Guitar activity control
 // TODO Guitar effects
