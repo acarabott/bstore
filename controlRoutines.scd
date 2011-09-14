@@ -187,7 +187,8 @@
         ~p3_guitarMelodyActivityThresh = index.linlin(0, 1, 0.8, 0.1);
         ~p3_guitarVerb.set(\room, index.linlin(0, 0.5, ~p3_guitarRoomInit = 0.8, 1), \mix, index.linlin(0, 0.5, ~p3_guitarMixInit, 1), \damp, index.linlin(0, 0.5, ~p3_guitarDampInit, 0.1));
         
-        ~p3_varsawMad = index.lincurve(0, 1, 1, 4, -2)
+        ~p3_varsawMad = index.lincurve(0, 1, 1, 4, -2);
+        
         if(index > 0.5) {
             if(~p3_thickGuitarHarmony.not) {
                 "Thick Harmony starts".postln;
@@ -213,6 +214,8 @@
     ~p3_bassNote = 50;
     while({index < 1}, {
         index.postln;
+        ~p3_guitarMelodyOctave = ~p3_data[\total].lincurve(0, 4, 1, 4, -1);
+        
         ~p3_varsawMad = index.linlin(0, 1, 4, 0);
         {
             ~p3_sliders[\bass].valueAction_(index);

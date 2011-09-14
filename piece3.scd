@@ -44,13 +44,6 @@ s.waitForBoot {
 
 
 (
-	(-4..4).do { |val|
-		(-1,-0.9).collect(_.lincurve(0, 100, 0, 1, val)).plot
-	}
-	)
-
-(-0.2).lincurve(-1, 1, -1, 1, 2)
-(
 ~p3_control = Routine {
     ~p3_guitarMelodyActivityLevel = 0.2;
     ~p3_guitarMelody.play(~p3_clock, Quant(4));
@@ -69,7 +62,7 @@ s.waitForBoot {
     // TODO BASS COMES UP
     ~p3_thickGuitarHarmony = true;
     // TODO Make this interactive
-    ~p3_guitarMelodyOctave = 2**(~p3_y*2).floor;
+    ~p3_guitarMelodyOctave = 2**(2*2).floor;
     
     // TODO fade ~p3_amps[\guitar] down to 0
     // TODO fade ~p3_amps[\varsaw] up to 0.8
