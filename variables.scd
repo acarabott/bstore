@@ -140,7 +140,7 @@
 ~p3_drumWildPats.add(\all -> false);
 
 
-~p3_drumWildPlayNext = 0.15;
+~p3_drumWildDontPlayNext = 0.85;
 ~p3_drumWildPlayNoteMin = 0.4;
 ~p3_drumWildMultMin = 0.2;
 ~p3_drumWildMultMax = 0.8;

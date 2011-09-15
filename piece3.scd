@@ -47,20 +47,6 @@ Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, item, \xpos, ~p3_data[\lrdiff],
 ~p3_kickOn = true;
 ~p3_snareOn = true;
 
-(-1, -0.9..1.0).collect { |num| num.scurve }.plot; 
-(~p3_data[\lrdiff]*2).range
-
-(-1, -0.9..1.0).collect { |item, i| item.bilin(0, -1, 1, 0, -1, 1)}.plot
-(-1, -0.9..1.0)
-(0,0.1..1.0).collect { |item, i| item.gaussCurve}.plot
-x = (-1, -0.9..1.0).normalize(-10, 10).collect { |num| num.lcurve } * 2
-(x-1).plot
-
-(-0.5 * 2).max(-1).min(1)
-((0.3*10).scurve * 2) -1
-0.7.scurve
-lincurve
-(-1).lincurve(-1, 1, -1, 1, 0)
 (
 ~p3_control = Routine {
     ~p3_drumRoutine.play(~p3_clock, Quant(4));

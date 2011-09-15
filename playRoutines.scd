@@ -132,17 +132,16 @@
 
 ~p3_drumWildRoutine = Routine {
     // TODO Divide up activity levels based on quarters. One for rate other for madness
-    var rateSig = Env.new([1, 2, 1, 0.05], [3, 1, 0.5]).asSignal(100);
+    var rateSig = Env.new([1, 2], [1]).asSignal(100);
     var drumBufs = [~p3_buffers[\kick], ~p3_buffers[\snare], ~p3_buffers[\hats]];
     var multArray = [2, 3, 4, 6, 8, 12, 16];
     var playNext = true;
-    var doubleWait = 0.5;
     var subMultArray;
     
     ~p3_bassNote = 57;
     
     inf.do {|i|
-
+        var doubleWait = 0.5;
         // Switch bassnote from b6 to 5 every 32 beats
         if(i%32 == 0) {
             if(~p3_bassNote == 57) {
@@ -166,7 +165,7 @@
 
                 // Probabalistic playing of specified drum hit
                 if(item > 0 && (1/item).coin) {
-                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[key], \amp, ~p3_amps[\drums] * ~p3_amps[(\drum_ ++ key).asSymbol], \rate, rate, \out, ~p3_drumVerbBus, \dur, 0.25, \tail, 0.25]);
+                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, ~p3_buffers[key], \amp, ~p3_amps[\drums] * ~p3_amps[(\drum_ ++ key).asSymbol], \rate, rate, \xpos, ~p3_data[\lrdiff], \ypos, [-1, -0.5, 0.5, 1].choose, \out, ~p3_drumVerbBus, \dur, 0.25, \tail, 0.25]);
                 };
             } {
                 //If all samples should be used, at any point
@@ -180,8 +179,8 @@
                             // Whether or not to play more than one note
                             if(~p3_data[\lowMax].linlin(0, 1, ~p3_drumWildMultMin, ~p3_drumWildMultMax).coin) {
                                 subMultArray = multArray[0..~p3_data[\lowMax].linlin(0.25, 1, 0, multArray.size).floor.asInteger];
-                                mult = subMultArray.wchoose(Array.series(subMultArray.size, 10, -2).normalizeSum);
-                                if(0.25.coin) {
+                                mult = subMultArray.wchoose(Array.series(subMultArray.size, 10, 1).normalizeSum);
+                                if(0.85.coin) {
                                     div = [2, 4, 8].wchoose([2,2,1].normalizeSum);
                                 } {
                                     div = 1;
@@ -189,7 +188,7 @@
 
                                 // TODO this can increase as time goes on
                                 if(0.25.coin) {
-                                    div = div * mult;
+                                    mult = 2;
                                 };
                             } {
                                 mult = 1;
@@ -198,7 +197,7 @@
 
                             // If more than one note, do/don't change rate of each hit
                             if(mult > 1) {
-                                if(~p3_drumWildRateMoves && (mult > 1)) {
+                                if(~p3_drumWildRateMoves) {
                                     if(0.5.coin) {
                                         rateFunc = {|ri| (rate - (ri/(1..10).choose))};
                                     } {
@@ -210,7 +209,7 @@
 
                                 // Possibly have a double length 'note'
                                 // This can be for longer cuts, or to get a cut + pause
-                                if(~p3_drumWildPlayNext.coin) {
+                                if(~p3_drumWildDontPlayNext.coin) {
                                     playNext = false;
                                     doubleWait = 1;
                                 };
@@ -228,13 +227,10 @@
                                 // "rateFunc: ".post; (rateFunc.()).postln;
                                 // " ".postln;
                             };
-
                             // Play notes using the double function.
-                            "~p3_amps[\drums] * ~p3_amps[(\drum_ ++ ~p3_buffers.findKeyForValue(item)).asSymbol]: ".post; (~p3_amps[\drums] * ~p3_amps[(\drum_ ++ ~p3_buffers.findKeyForValue(item)).asSymbol]).postln;
                             ~p3_double.(
                                 {|di|
-                                    ~daRate = rateFunc.(di);
-                                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, item, \xpos, ~p3_data[\lrdiff], \amp, ~p3_amps[\drums] * ~p3_amps[(\drum_ ++ ~p3_buffers.findKeyForValue(item)).asSymbol], \rate, rateFunc.(di), \out, ~p3_drumVerbBus, \dur, 0.25, \tail, 0.25])
+                                    Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, item, \xpos, ~p3_data[\lrdiff], \ypos, [-1, -0.5, 0.5, 1].choose, \amp, ~p3_amps[\drums] * ~p3_amps[(\drum_ ++ ~p3_buffers.findKeyForValue(item)).asSymbol], \rate, rateFunc.(di), \out, ~p3_drumVerbBus, \dur, 0.25, \tail, 0.25])
                                 },
                                 mult,
                                 div,

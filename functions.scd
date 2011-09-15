@@ -11,14 +11,11 @@
     ~p3_data[\lrdiff] = ((~p3_data[\left].neg + ~p3_data[\right]) * 2).max(-1).min(1);
     ~p3_data[\tbdiff] = ~p3_data[\top].neg + ~p3_data[\bottom];
     ~p3_data[\mean] = mulAdd.mean;    
-    ~p3_data[\lowMax] = [~p3_data[\left], ~p3_data[\right]].maxItem;
+    ~p3_data[\lowMax] = [~p3_data[\1], ~p3_data[\2], ~p3_data[\3], ~p3_data[\4]].maxItem;
     
-    if(~p3_data[\lowMax] < 0.35) {
-        ~p3_data[\lowMax] = [~p3_data[\1], ~p3_data[\2], ~p3_data[\3], ~p3_data[\4]].maxItem;
-    } {
+    if(~p3_data[\lowMax] > 0.35) {
         ~p3_data[\lowMax] = (~p3_data[\left] + ~p3_data[\right]).min(1);
-    };
-    
+    };    
 };
 
 

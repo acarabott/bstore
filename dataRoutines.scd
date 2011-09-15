@@ -67,6 +67,7 @@ r.stop
 
 Tdef(\p3_section4Control, {
     var start, startSplit, middle, end, index, div, inc, mWait, eWait;
+    var tripsOn;
     index = 0;
     start = ~p3_sectionDuration/5;
     startSplit = start/6;
@@ -76,6 +77,7 @@ Tdef(\p3_section4Control, {
     inc = 1/div;
     mWait = middle/div;
     eWait = (end/2)/div;
+    tripsOn = false;
     "Section started".postln;
     
     // 1/6
@@ -110,79 +112,67 @@ Tdef(\p3_section4Control, {
     ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[0]);
     startSplit.wait;
     
-    "Wild drums start".postln;
+    "Starting middle".postln;
     ~p3_drumWildPats.add(\all -> true);
+    ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[2]);
+    while({index < 1}, {
+        index.postln;
+        ~p3_drumWildDontPlayNext = index.linlin(0, 1, 0.85, 0);
+        ~p3_drumWildPlayNoteMin = index.linlin(0, 1, 0, 1);
+        
+        if(index > 0.3 && tripsOn.not) {
+            "trips on".postln;
+            tripsOn = true;
+            ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[3]);
+        };
+        
+        if(index > 0.5 && tripsOn) {
+            "trips off".postln;
+            tripsOn = false;
+            ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[2]);
+        };
+        
+        if(index > 0.7 && tripsOn.not) {
+            "trips on".postln;            
+            tripsOn = true;
+            ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[3]);
+        };
+        
+        if(index > 0.8 && tripsOn) {
+            "trips off".postln;
+            tripsOn = false;
+            ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[2]);
+        };
+        
+        index = index + inc;
+        mWait.wait;
+        
+    });
+    "Wild drums start".postln;
     
 }).play;
-~p3_drumWildControl = Routine {
-    // 4:00 - All drum patterns drop out. 
-    //      - More interactive drums start
-    ~p3_drumWildPats.add(\snare -> ~p3_drumWildSnarePats[3]);     
-    ~p3_drumWildPats.add(\kick  -> ~p3_drumWildKickPats[2]);
-    ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[0]);
-    ~p3_drumWildPats.add(\all -> true);
-
-    if(~debug) {
-        5.wait;
-    } {
-        60.wait;        
+~index = 0;
+100.do { |item|
+    if(~index > 0.50 && (~index < 0.51)) {
+        "hi'".postln;
     };
-    // 5:00 - Hats enter with interactive drums
-
-    ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[1]);
-
-    if(~debug) {
-        5.wait;
-    } {
-        30.wait;        
-    };
-    // 5:30 - Hats on beat
-    //      - Drums become a lot more active
-    ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[2]);
-    ~p3_drumWildPlayNext = 0;
-    ~p3_drumWildPlayNoteMin = 0.7;
+    ~index = ~index + 0.01;
+};
+    ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[3]);
+    ~p3_drumWildDontPlayNext = 0
+    ~p3_drumWildDontPlayNext = 1
     
-    if(~debug) {
-        5.wait;
-    } {
-        30.wait;        
-    };
-    
-    // 6:00 - Hats switch between Crotchet/dotted crotchet for 0:40 - 2:00
-    4.do { |i|
-        if(~debug) {
-            5.wait;
-        } {
-            [5,15].choose.wait;        
-        };
-        ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[3]);
-        if(~debug) {
-            5.wait;
-        } {
-            [5,15].choose.wait;        
-        };
-        ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[2]);
     };
     // 6:40-8:00 - Drums very active
     //           - Pitch shift rolls start
     ~p3_drumWildPlayNoteMin = 1;
     ~p3_drumWildRateMoves = true;
-    ~p3_drumWildMultMin = 0.5;
+    ~p3_drumWildMultMin = 1;
 
-    if(~debug) {
-        5.wait;
-    } {
-        30.wait;        
-    };
     // 7:10-8:30 - Kick and snare back in
     ~p3_drumWildPats.add(\kick  -> ~p3_drumWildKickPats[0]);
     ~p3_drumWildPats.add(\snare -> ~p3_drumWildSnarePats[0]); 
 
-    if(~debug) {
-        5.wait;
-    } {
-        30.wait;        
-    };
     // 7:40-9:00 - Drums very cutty/rolly
     ~p3_drumWildMultMin = 1;
     ~p3_drumWildMultMax = 1;
@@ -203,3 +193,6 @@ Tdef(\p3_section4Control, {
     ~p3_controlCondition.signal;
     
 };
+
+
+Env.new([1, 2, 1, 0.05], [8, 1, 0.5]).asSignal(100).plot
