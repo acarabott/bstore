@@ -7,6 +7,7 @@
 ~p3_mixerBot = CompositeView(~p3_mixer, ~p3_mixerCompBounds);
 ~p3_mixerBot.addFlowLayout;
 ~p3_sliders = Dictionary[];
+~p3_outSliders = Dictionary[];
 ~p3_amps.asSortedArray.do { |item|
     var split = item[0].asString.split($_);
     var view, width;

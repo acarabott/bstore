@@ -1,6 +1,3 @@
-~debug = true;
-~debug = false;
-
 s.options.memSize = 2**18;
 s.latency = 0.4;
 ~p3_path = "/Users/arthurc/Documents/programming/computerMusic/bstore/";
@@ -22,11 +19,6 @@ s.waitForBoot {
 };
 
 
-Synth.before(~p3_drumVerb, \BSP3_Sampler, [\buf, item, \xpos, ~p3_data[\lrdiff], \amp, ~p3_amps[\drums] * ~p3_amps[(\drum_ ++ ~p3_buffers.findKeyForValue(item)).asSymbol], \rate, rateFunc.(di), \out, ~p3_drumVerbBus, \dur, 0.25, \tail, 0.25])
-
-~item = ~p3_buffers.choose
-~p3_amps[\drums] * ~p3_amps[(\drum_ ++ ~p3_buffers.findKeyForValue(~item)).asSymbol]
-//Reset
 
 ~p3_stop.();
 ~p3_setup.();
