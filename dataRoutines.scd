@@ -80,6 +80,7 @@ Tdef(\p3_section4Control, {
     tripsOn = false;
     "Section started".postln;
     
+    ~p3_drumWildRoutine.play(~p3_clock, quant:Quant(4));
     // 1/6
     startSplit.wait;
     "Hats enter on off beat".postln;
@@ -112,13 +113,16 @@ Tdef(\p3_section4Control, {
     ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[0]);
     startSplit.wait;
     
-    "Starting middle".postln;
+    "Wild drums start".postln;
     ~p3_drumWildPats.add(\all -> true);
     ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[2]);
     while({index < 1}, {
         index.postln;
-        ~p3_drumWildDontPlayNext = index.linlin(0, 1, 0.85, 0);
+        ~p3_drumWildDontPlayNext = index.linlin(0, 0.5, 0.85, 0);
         ~p3_drumWildPlayNoteMin = index.linlin(0, 1, 0, 1);
+        ~p3_drumWildMultMin = index.linlin(0, 0.5, 0, 0.9);
+        ~p3_drumWildMultMax = index.linlin(0, 0.5, 0.25, 1);
+        ~p3_drumVerb.set(\room, (~p3_data[\lowMax]* index.linlin(0, 1, 0.7, 1.5)).min(0.9));
         
         if(index > 0.3 && tripsOn.not) {
             "trips on".postln;
@@ -144,55 +148,17 @@ Tdef(\p3_section4Control, {
             ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[2]);
         };
         
+        if(index > 0.5 && ~p3_drumWildRateMoves.not) {
+            "moves on".postln;
+            ~p3_drumWildRateMoves = true;
+            ~p3_drumWildPats.add(\kick  -> ~p3_drumWildKickPats[0]);
+            ~p3_drumWildPats.add(\snare -> ~p3_drumWildSnarePats[0]); 
+            
+        };
+        
         index = index + inc;
         mWait.wait;
         
     });
-    "Wild drums start".postln;
     
 }).play;
-~index = 0;
-100.do { |item|
-    if(~index > 0.50 && (~index < 0.51)) {
-        "hi'".postln;
-    };
-    ~index = ~index + 0.01;
-};
-    ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[3]);
-    ~p3_drumWildDontPlayNext = 0
-    ~p3_drumWildDontPlayNext = 1
-    
-    };
-    // 6:40-8:00 - Drums very active
-    //           - Pitch shift rolls start
-    ~p3_drumWildPlayNoteMin = 1;
-    ~p3_drumWildRateMoves = true;
-    ~p3_drumWildMultMin = 1;
-
-    // 7:10-8:30 - Kick and snare back in
-    ~p3_drumWildPats.add(\kick  -> ~p3_drumWildKickPats[0]);
-    ~p3_drumWildPats.add(\snare -> ~p3_drumWildSnarePats[0]); 
-
-    // 7:40-9:00 - Drums very cutty/rolly
-    ~p3_drumWildMultMin = 1;
-    ~p3_drumWildMultMax = 1;
-    ~p3_drumWildPlayNext = 1;
-    
-    if(~debug) {
-        5.wait;
-    } {
-        (60).wait;        
-    };
-    // 8:40-10:00 - Drums go back to a basic beat
-    ~p3_drumWildPats.add(\all -> false);
-    ~p3_drumWildPats.add(\kick  -> ~p3_drumWildKickPats[0]);
-    ~p3_drumWildPats.add(\snare -> ~p3_drumWildSnarePats[0]); 
-    ~p3_drumWildPats.add(\hats  -> ~p3_drumWildHatsPats[0]);
-    
-    ~p3_controlCondition.test = true;
-    ~p3_controlCondition.signal;
-    
-};
-
-
-Env.new([1, 2, 1, 0.05], [8, 1, 0.5]).asSignal(100).plot

@@ -129,12 +129,13 @@
         0.5.wait;
     };
 };
-
+~p3_drumWildRoutine.stop;
+~p3_drumWildRoutine.play(~p3_clock, Quant(4));
 ~p3_drumWildRoutine = Routine {
     // TODO Divide up activity levels based on quarters. One for rate other for madness
     var rateSig = Env.new([1, 2], [1]).asSignal(100);
     var drumBufs = [~p3_buffers[\kick], ~p3_buffers[\snare], ~p3_buffers[\hats]];
-    var multArray = [2, 3, 4, 6, 8, 12, 16];
+    var multArray = [2, 3, 4];
     var playNext = true;
     var subMultArray;
     
@@ -180,16 +181,13 @@
                             if(~p3_data[\lowMax].linlin(0, 1, ~p3_drumWildMultMin, ~p3_drumWildMultMax).coin) {
                                 subMultArray = multArray[0..~p3_data[\lowMax].linlin(0.25, 1, 0, multArray.size).floor.asInteger];
                                 mult = subMultArray.wchoose(Array.series(subMultArray.size, 10, 1).normalizeSum);
+
                                 if(0.85.coin) {
-                                    div = [2, 4, 8].wchoose([2,2,1].normalizeSum);
+                                    div = 2;
                                 } {
                                     div = 1;
                                 };
 
-                                // TODO this can increase as time goes on
-                                if(0.25.coin) {
-                                    mult = 2;
-                                };
                             } {
                                 mult = 1;
                                 div = 1;
