@@ -158,7 +158,20 @@ Tdef(\p3_section4Control, {
         
         index = index + inc;
         mWait.wait;
-        
     });
+    "Reached ending".postln;
+    index = 0;
+    while({index < 1}, {
+        index.postln;
+        ~p3_drumWildDontPlayNext = index.linlin(0, 1, 0, 1);
+        ~p3_drumWildPlayNoteMin = index.linlin(0, 1, 1, 0);
+        ~p3_drumWildMultMin = index.linlin(0, 1, 1, 0);
+        ~p3_drumWildMultMax = index.linlin(0, 1, 1, 0);
+        ~p3_drumVerb.set(\room, (~p3_data[\lowMax]* index.linlin(0, 1, 1.5, ~p3_drumRoomInit)).min(0.9));
+        
+        index = index + inc;
+        eWait.wait;
+    });
+    "Finished".postln;
     
 }).play;
